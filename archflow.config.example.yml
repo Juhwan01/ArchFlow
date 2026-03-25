@@ -1,0 +1,46 @@
+# ArchFlow Configuration
+# Copy this file to archflow.config.yml and customize.
+
+# Jira Cloud
+jira:
+  url: "https://your-domain.atlassian.net"
+  projects:
+    - "KAN"              # 프로젝트 키 목록 (여러 프로젝트 지원)
+    # - "FRONT"
+    # - "BACK"
+  board_id: "1"          # 기본 보드 ID (스프린트 조회용)
+
+# GitHub
+github:
+  repos:
+    - "your-org/backend-api"       # GitHub 레포 목록
+    # - "your-org/frontend-web"
+    # - "your-org/mobile-app"
+  default_branch: "main"
+
+# Google Drive (Draw.io 파일 저장소)
+gdrive:
+  folder_id: "1abc123..."          # .drawio 파일이 있는 폴더 ID
+  cache_ttl_minutes: 30            # 다이어그램 캐시 유지 시간 (분)
+
+# 소스 간 매칭 설정
+matching:
+  # 명시적 매핑: 다이어그램 노드 ↔ Jira/GitHub 연결
+  explicit:
+    - diagram_node: "Auth Service"
+      jira_component: "authentication"
+      jira_labels: ["auth"]
+      github_path_prefix: "src/auth/"
+    # - diagram_node: "API Gateway"
+    #   jira_component: "api-gateway"
+    #   github_path_prefix: "src/gateway/"
+
+  # 자동 매칭 (노드 라벨 ↔ Jira 컴포넌트 유사도)
+  auto_match:
+    enabled: true
+    strategy: "fuzzy"              # exact | fuzzy | contains
+    min_score: 0.7                 # 퍼지 매칭 임계값 (0-1)
+
+  # 이슈 키 패턴 (GitHub PR/브랜치에서 Jira 키 감지)
+  issue_patterns:
+    - "(?i)KAN-\\d+"
