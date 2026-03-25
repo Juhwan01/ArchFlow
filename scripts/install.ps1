@@ -44,11 +44,15 @@ Push-Location $ProjectDir
 try {
     $uvExists = Get-Command uv -ErrorAction SilentlyContinue
     if ($uvExists) {
-        uv sync 2>$null
+        $ErrorActionPreference = "Continue"
+        uv sync 2>&1 | Out-Null
+        $ErrorActionPreference = "Stop"
         Write-Host "  Done (uv sync)." -ForegroundColor Green
     } else {
         Write-Host "  uv not found. Using pip..." -ForegroundColor DarkYellow
-        pip install -e . 2>$null
+        $ErrorActionPreference = "Continue"
+        pip install -e . 2>&1 | Out-Null
+        $ErrorActionPreference = "Stop"
         Write-Host "  Done (pip install)." -ForegroundColor Green
     }
 } finally {
