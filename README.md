@@ -20,7 +20,7 @@
   <a href="#quick-start">Quick Start</a> ·
   <a href="#tools">Tools (23)</a> ·
   <a href="#slash-commands">Commands</a> ·
-  <a href="#configuration">Config</a> ·
+  <a href="#configuration-guide">Config</a> ·
   <a href="#contributing">Contributing</a> ·
   <a href="./README.ko.md">한국어</a>
 </p>
@@ -42,7 +42,7 @@ ArchFlow is an MCP (Model Context Protocol) server that lets your LLM query **Ji
 ### Demo
 
 ```
-You: "KAN-42 관련 코드 어디에 있어?"
+You: "Where's the code for KAN-42?"
 
 ArchFlow traces across 3 sources:
   ✓ Jira  → KAN-42: "Add OAuth2 login" (In Progress, @alice)
@@ -54,23 +54,112 @@ ArchFlow traces across 3 sources:
 
 ## Quick Start
 
-> **Prerequisites**: Python 3.11+ · [uv](https://docs.astral.sh/uv/) · Claude Code CLI
+### Prerequisites
+
+| Tool | Check | Install |
+|------|-------|---------|
+| Python 3.11+ | `python --version` | [python.org](https://python.org) |
+| uv | `uv --version` | See below |
+| Claude Code | Already using it | [claude.ai/code](https://claude.ai/code) |
+
+<details>
+<summary><strong>Install uv</strong></summary>
 
 ```bash
-# 1. Clone & install
-git clone https://github.com/your-org/archflow.git
-cd archflow
-bash scripts/install.sh    # interactive — asks for API credentials
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 2. Edit project config
-code archflow.config.yml   # or any editor
-
-# 3. Restart Claude Code — done!
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-The installer handles: dependencies, credential setup, MCP registration, and slash commands.
+</details>
+
+### Automated Install (recommended)
+
+```bash
+# 1. Clone
+git clone https://github.com/your-org/archflow.git
+cd archflow
+
+# 2. Run installer
+# macOS / Linux
+bash scripts/install.sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+
+# 3. Edit project config (set your Jira projects, GitHub repos)
+code archflow.config.yml    # or any editor
+
+# 4. Restart Claude Code — done!
+```
 
 > **Partial setup OK** — GitHub or Google Drive credentials can be skipped. ArchFlow works with whatever sources are configured.
+
+<details>
+<summary><strong>Manual Install (without script)</strong></summary>
+
+If you prefer to set things up manually or the script doesn't work on your system:
+
+```bash
+# 1. Install dependencies
+cd archflow
+uv sync          # or: pip install -e .
+
+# 2. Copy config template
+cp archflow.config.example.yml archflow.config.yml
+# Edit archflow.config.yml with your projects/repos
+```
+
+**3. Register MCP server** — add this to `~/.claude/.mcp.json` (create the file if it doesn't exist):
+
+```jsonc
+{
+  "mcpServers": {
+    "archflow": {
+      "command": "uv",
+      "args": ["--directory", "/absolute/path/to/archflow", "run", "archflow"],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "ARCHFLOW_CONFIG_PATH": "/absolute/path/to/archflow/archflow.config.yml",
+
+        // Jira (required for Jira features)
+        "JIRA_INSTANCE_URL": "https://your-domain.atlassian.net",
+        "JIRA_USER_EMAIL": "you@example.com",
+        "JIRA_API_KEY": "your-jira-api-token",
+
+        // GitHub (optional)
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx",
+
+        // Google Drive / Draw.io (optional)
+        "GOOGLE_CLIENT_ID": "...",
+        "GOOGLE_CLIENT_SECRET": "...",
+        "GOOGLE_REFRESH_TOKEN": "..."
+      }
+    }
+  }
+}
+```
+
+> **MCP config file location**:
+> - macOS / Linux: `~/.claude/.mcp.json`
+> - Windows: `C:\Users\<username>\.claude\.mcp.json`
+
+**4. Install slash commands** (optional):
+
+```bash
+# Copy skill files to Claude Code skills directory
+# macOS / Linux
+cp -r skills/archflow-* ~/.claude/skills/
+
+# Windows (PowerShell)
+Copy-Item -Recurse skills\archflow-* $env:USERPROFILE\.claude\skills\
+```
+
+**5. Restart Claude Code.**
+
+</details>
 
 ---
 
@@ -124,6 +213,18 @@ The installer handles: dependencies, credential setup, MCP registration, and sla
 |------|-------------|
 | `archflow_search` | Search across Jira + GitHub + diagrams at once |
 
+### Which sources does each tool need?
+
+| Tool group | Jira | GitHub | Draw.io |
+|-----------|:----:|:------:|:-------:|
+| Jira tools | **Required** | — | — |
+| GitHub tools | — | **Required** | — |
+| Draw.io tools | — | — | **Required** |
+| Cross-Source (trace, overview) | **Required** | Optional | Optional |
+| Unified Search | Optional | Optional | Optional |
+
+If a source is not configured, those tools return a "not configured" message instead of crashing.
+
 ---
 
 ## Slash Commands
@@ -141,52 +242,68 @@ After installation, use these in Claude Code:
 
 ---
 
-## Configuration
+## Configuration Guide
 
-### `archflow.config.yml`
+### Step 1: `archflow.config.yml`
+
+After running the installer, edit `archflow.config.yml` in the project root:
 
 ```yaml
 jira:
   url: "https://your-domain.atlassian.net"
   projects:
-    - "KAN"              # multiple projects supported
-    - "FRONT"
-  board_id: "1"
+    - "KAN"              # your Jira project key(s)
+  board_id: "1"          # see "How to find board_id" below
 
 github:
   repos:
-    - "your-org/backend-api"     # multiple repos supported
-    - "your-org/frontend-web"
+    - "your-org/backend-api"     # owner/repo format
   default_branch: "main"
 
 gdrive:
-  folder_id: "1abc123..."       # Google Drive folder with .drawio files
+  folder_id: "1AbCdEfG..."      # see "How to find folder_id" below
   cache_ttl_minutes: 30
-
-matching:
-  explicit:                      # manual: diagram node → Jira/GitHub mapping
-    - diagram_node: "Auth Service"
-      jira_component: "authentication"
-      github_path_prefix: "src/auth/"
-  auto_match:
-    enabled: true
-    strategy: "fuzzy"            # exact | fuzzy | contains
-    min_score: 0.7
 ```
 
-### Environment Variables
+#### How to find `board_id`
 
-| Variable | When needed | Where to get it |
-|----------|------------|-----------------|
-| `JIRA_URL` | Jira features | Your Atlassian URL |
-| `JIRA_EMAIL` | Jira features | Your email |
-| `JIRA_API_TOKEN` | Jira features | [Create token →](#jira-api-token) |
-| `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub features | [Create token →](#github-personal-access-token) |
-| `GOOGLE_CLIENT_ID` | Draw.io features | [Setup OAuth →](#google-drive-oauth) |
-| `GOOGLE_CLIENT_SECRET` | Draw.io features | Google Cloud Console |
-| `GOOGLE_REFRESH_TOKEN` | Draw.io features | OAuth flow |
+1. Open your Jira board in a browser
+2. Look at the URL:
+   ```
+   https://your-domain.atlassian.net/jira/software/projects/KAN/boards/1
+                                                                       ^
+                                                                  this is board_id
+   ```
+3. Copy the number after `/boards/`
 
-> Also accepts `JIRA_INSTANCE_URL`, `JIRA_USER_EMAIL`, `JIRA_API_KEY` as aliases.
+#### How to find `folder_id` (Google Drive)
+
+1. Open the Google Drive folder that contains your `.drawio` files
+2. Look at the URL:
+   ```
+   https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                          this is folder_id
+   ```
+3. Copy everything after `/folders/`
+
+### Step 2: Environment Variables (API Tokens)
+
+These are set automatically by the install script. If you need to set them manually:
+
+| Variable | For | How to get |
+|----------|-----|-----------|
+| `JIRA_INSTANCE_URL` | Jira | Your Atlassian URL (e.g., `https://team.atlassian.net`) |
+| `JIRA_USER_EMAIL` | Jira | Your Atlassian email |
+| `JIRA_API_KEY` | Jira | [Create Jira token →](#jira-api-token) |
+| `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub | [Create GitHub token →](#github-personal-access-token) |
+| `GOOGLE_CLIENT_ID` | Draw.io | [Setup Google OAuth →](#google-drive-oauth) |
+| `GOOGLE_CLIENT_SECRET` | Draw.io | Google Cloud Console |
+| `GOOGLE_REFRESH_TOKEN` | Draw.io | OAuth flow |
+
+> **Aliases**: `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN` also work (the install script uses `JIRA_INSTANCE_URL` / `JIRA_USER_EMAIL` / `JIRA_API_KEY`).
+>
+> **Google Drive**: All 3 variables (`CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`) must be set together. If any is missing, Draw.io features are disabled.
 
 ### Token Setup
 
@@ -195,7 +312,7 @@ matching:
 
 1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
 2. Click **"Create API token"** → enter label (e.g., `archflow`)
-3. Copy token → paste into installer
+3. Copy token → paste into installer or `.mcp.json`
 
 </details>
 
@@ -205,7 +322,7 @@ matching:
 1. Go to https://github.com/settings/tokens?type=beta
 2. **Generate new token** → name it `archflow`
 3. Permissions → Repository: **Contents**, **Pull requests**, **Metadata** (all Read-only)
-4. Copy token → paste into installer
+4. Copy token → paste into installer or `.mcp.json`
 
 </details>
 
@@ -229,7 +346,7 @@ matching:
 
 ```mermaid
 graph TB
-    User["User Question"] --> Server["ArchFlow MCP Server"]
+    User["User Question"] --> Server
 
     subgraph Server["ArchFlow MCP Server"]
         Cache["Cache (TTL)"]
@@ -250,21 +367,36 @@ graph TB
 
 ## Troubleshooting
 
-| Problem | Solution |
-|---------|----------|
-| Server not in Claude Code | Check JSON syntax: `python3 -m json.tool ~/.claude/.mcp.json` |
-| "Jira not configured" | Verify `JIRA_URL` env var is set |
-| "GitHub not configured" | Set `GITHUB_PERSONAL_ACCESS_TOKEN` in MCP config |
-| Draw.io files not found | Verify `folder_id` + Google OAuth tokens |
-| Stale data | Default cache TTL is 30 min. Restart server to clear |
-| GitHub rate limit | Search API: 30 req/min. Results are cached automatically |
+### Setup Checklist
+
+Run these to verify your setup is working:
 
 ```bash
-# Validate setup
-python3 -m json.tool ~/.claude/.mcp.json   # config syntax
-cd archflow && uv run archflow              # server starts? (Ctrl+C)
-uv run python -m pytest tests/ -v           # run tests
+# 1. Check Python version (need 3.11+)
+python --version
+
+# 2. Check MCP config is valid JSON
+python -m json.tool ~/.claude/.mcp.json          # macOS/Linux
+python -m json.tool %USERPROFILE%\.claude\.mcp.json   # Windows
+
+# 3. Check server starts without errors
+cd archflow && uv run archflow
+# (Ctrl+C to stop — if no errors, it works)
 ```
+
+### Common Issues
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| Server not in Claude Code | MCP config not registered | Run install script again, or add manually to `.mcp.json` ([see manual install](#manual-install-without-script)) |
+| `"Jira not configured"` | `JIRA_INSTANCE_URL` env var missing | Check `.mcp.json` → `archflow.env` has all 3 Jira variables |
+| `"GitHub not configured"` | `GITHUB_PERSONAL_ACCESS_TOKEN` missing | Add to `.mcp.json` → `archflow.env` |
+| Draw.io files not found | Wrong `folder_id` or missing OAuth tokens | Check `folder_id` in config ([how to find →](#how-to-find-folder_id-google-drive)) and all 3 Google env vars |
+| Stale data | API responses cached | Default TTL is 30 min. Restart Claude Code to clear cache |
+| GitHub rate limit | Search API: 30 req/min | Wait a minute — results are cached automatically |
+| `bash: command not found` (Windows) | Ran bash script in PowerShell/CMD | Use `powershell -ExecutionPolicy Bypass -File scripts\install.ps1` instead |
+| `SyntaxError` on server start | Wrong Python version | Check `python --version` — need 3.11+ |
+| MCP config parse error | Invalid JSON in `.mcp.json` | Run `python -m json.tool ~/.claude/.mcp.json` to find the error |
 
 ---
 
@@ -275,38 +407,33 @@ uv run python -m pytest tests/ -v           # run tests
 ```
 src/archflow/
 ├── server.py          # MCP server entry point + lifespan
-├── clients/           # HTTP clients (Jira, GitHub, Google Drive)
-│   ├── jira_client.py
-│   ├── github_client.py
-│   └── gdrive_client.py
+├── clients/           # HTTP clients
+│   ├── jira_client.py       # Jira REST API calls
+│   ├── github_client.py     # GitHub REST API calls
+│   └── gdrive_client.py     # Google Drive API calls
 ├── providers/         # Business logic per source
-│   ├── jira_provider.py
-│   ├── github_provider.py
-│   └── drawio_provider.py
-├── core/              # Config, cache, matcher, models
-│   ├── config.py
-│   ├── cache.py
-│   ├── matcher.py
-│   └── models.py
+│   ├── jira_provider.py     # Jira data processing
+│   ├── github_provider.py   # GitHub data processing
+│   └── drawio_provider.py   # Draw.io XML parsing + data processing
+├── core/              # Shared infrastructure
+│   ├── config.py            # YAML config loader
+│   ├── cache.py             # TTL cache
+│   ├── matcher.py           # Cross-source matching engine
+│   └── models.py            # Pydantic models
 └── tools/             # MCP tool registrations (23 tools)
-    ├── jira_tools.py
-    ├── github_tools.py
-    ├── drawio_tools.py
-    ├── cross_tools.py
-    └── search_tools.py
+    ├── jira_tools.py        # 7 Jira tools
+    ├── github_tools.py      # 6 GitHub tools
+    ├── drawio_tools.py      # 4 Draw.io tools
+    ├── cross_tools.py       # 5 cross-source tools
+    └── search_tools.py      # 1 unified search tool
 ```
 
 ### Development Setup
 
 ```bash
-# Install dev dependencies
-uv sync --dev
-
-# Run tests
-uv run python -m pytest tests/ -v
-
-# Lint
-uv run ruff check src/
+uv sync --dev                          # install dev dependencies
+uv run python -m pytest tests/ -v      # run tests
+uv run ruff check src/                 # lint
 ```
 
 ### Where to Start

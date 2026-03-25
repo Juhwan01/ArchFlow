@@ -20,8 +20,8 @@
   <a href="#빠른-시작">빠른 시작</a> ·
   <a href="#도구">도구 (23개)</a> ·
   <a href="#슬래시-명령어">명령어</a> ·
-  <a href="#설정">설정</a> ·
-  <a href="#기여-가이드">기여 가이드</a> ·
+  <a href="#설정-가이드">설정</a> ·
+  <a href="#기여-가이드">기여</a> ·
   <a href="./README.md">English</a>
 </p>
 
@@ -54,23 +54,112 @@ ArchFlow가 3개 소스를 추적합니다:
 
 ## 빠른 시작
 
-> **사전 준비**: Python 3.11+ · [uv](https://docs.astral.sh/uv/) · Claude Code CLI
+### 사전 준비
+
+| 도구 | 확인 방법 | 설치 |
+|------|----------|------|
+| Python 3.11+ | `python --version` | [python.org](https://python.org) |
+| uv | `uv --version` | 아래 참고 |
+| Claude Code | 이미 사용 중이면 OK | [claude.ai/code](https://claude.ai/code) |
+
+<details>
+<summary><strong>uv 설치</strong></summary>
 
 ```bash
-# 1. 클론 & 설치
-git clone https://github.com/your-org/archflow.git
-cd archflow
-bash scripts/install.sh    # 대화형 — API 크레덴셜을 물어봅니다
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# 2. 프로젝트 설정 편집
-code archflow.config.yml   # 또는 아무 에디터
-
-# 3. Claude Code 재시작 — 끝!
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-설치 스크립트가 처리하는 것: 의존성 설치, 크레덴셜 설정, MCP 등록, 슬래시 명령어 등록.
+</details>
+
+### 자동 설치 (권장)
+
+```bash
+# 1. 클론
+git clone https://github.com/your-org/archflow.git
+cd archflow
+
+# 2. 설치 실행
+# macOS / Linux
+bash scripts/install.sh
+
+# Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File scripts\install.ps1
+
+# 3. 프로젝트 설정 편집 (Jira 프로젝트, GitHub 레포 지정)
+code archflow.config.yml    # 또는 아무 에디터
+
+# 4. Claude Code 재시작 — 끝!
+```
 
 > **부분 설정 가능** — GitHub이나 Google Drive 없이도 동작합니다. 연결된 소스만으로 작동합니다.
+
+<details>
+<summary><strong>수동 설치 (스크립트 없이)</strong></summary>
+
+스크립트가 안 되거나 직접 설정하고 싶을 때:
+
+```bash
+# 1. 의존성 설치
+cd archflow
+uv sync          # 또는: pip install -e .
+
+# 2. 설정 파일 복사
+cp archflow.config.example.yml archflow.config.yml
+# archflow.config.yml을 열어 프로젝트/레포 정보 입력
+```
+
+**3. MCP 서버 등록** — `~/.claude/.mcp.json` 파일에 추가 (없으면 새로 만들기):
+
+```jsonc
+{
+  "mcpServers": {
+    "archflow": {
+      "command": "uv",
+      "args": ["--directory", "/absolute/path/to/archflow", "run", "archflow"],
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "ARCHFLOW_CONFIG_PATH": "/absolute/path/to/archflow/archflow.config.yml",
+
+        // Jira (Jira 기능 사용 시 필수)
+        "JIRA_INSTANCE_URL": "https://your-domain.atlassian.net",
+        "JIRA_USER_EMAIL": "you@example.com",
+        "JIRA_API_KEY": "your-jira-api-token",
+
+        // GitHub (선택)
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx",
+
+        // Google Drive / Draw.io (선택)
+        "GOOGLE_CLIENT_ID": "...",
+        "GOOGLE_CLIENT_SECRET": "...",
+        "GOOGLE_REFRESH_TOKEN": "..."
+      }
+    }
+  }
+}
+```
+
+> **MCP 설정 파일 위치**:
+> - macOS / Linux: `~/.claude/.mcp.json`
+> - Windows: `C:\Users\<사용자명>\.claude\.mcp.json`
+
+**4. 슬래시 명령어 설치** (선택):
+
+```bash
+# 스킬 파일을 Claude Code 스킬 디렉토리에 복사
+# macOS / Linux
+cp -r skills/archflow-* ~/.claude/skills/
+
+# Windows (PowerShell)
+Copy-Item -Recurse skills\archflow-* $env:USERPROFILE\.claude\skills\
+```
+
+**5. Claude Code 재시작.**
+
+</details>
 
 ---
 
@@ -124,6 +213,18 @@ code archflow.config.yml   # 또는 아무 에디터
 |------|--------|
 | `archflow_search` | Jira + GitHub + 다이어그램 통합 검색 |
 
+### 각 도구에 필요한 소스
+
+| 도구 그룹 | Jira | GitHub | Draw.io |
+|----------|:----:|:------:|:-------:|
+| Jira 도구 | **필수** | — | — |
+| GitHub 도구 | — | **필수** | — |
+| Draw.io 도구 | — | — | **필수** |
+| 크로스소스 (추적, 오버뷰) | **필수** | 선택 | 선택 |
+| 통합 검색 | 선택 | 선택 | 선택 |
+
+설정 안 된 소스의 도구는 크래시 대신 "not configured" 메시지를 반환합니다.
+
 ---
 
 ## 슬래시 명령어
@@ -141,53 +242,68 @@ code archflow.config.yml   # 또는 아무 에디터
 
 ---
 
-## 설정
+## 설정 가이드
 
-### `archflow.config.yml`
+### Step 1: `archflow.config.yml`
+
+설치 스크립트 실행 후 프로젝트 루트의 `archflow.config.yml`을 편집:
 
 ```yaml
 jira:
   url: "https://your-domain.atlassian.net"
   projects:
-    - "KAN"              # 여러 프로젝트 지원
-    - "FRONT"
-  board_id: "1"
+    - "KAN"              # Jira 프로젝트 키
+  board_id: "1"          # 아래 "board_id 찾는 법" 참고
 
 github:
   repos:
-    - "your-org/backend-api"     # 여러 레포 지원
-    - "your-org/frontend-web"
+    - "your-org/backend-api"     # owner/repo 형식
   default_branch: "main"
 
 gdrive:
-  folder_id: "1abc123..."       # .drawio 파일이 있는 Google Drive 폴더
+  folder_id: "1AbCdEfG..."      # 아래 "folder_id 찾는 법" 참고
   cache_ttl_minutes: 30
-
-matching:
-  explicit:                      # 수동 매핑: 다이어그램 노드 → Jira/GitHub
-    - diagram_node: "Auth Service"
-      jira_component: "authentication"
-      github_path_prefix: "src/auth/"
-  auto_match:
-    enabled: true
-    strategy: "fuzzy"            # exact | fuzzy | contains
-    min_score: 0.7
 ```
 
-### 환경 변수
+#### board_id 찾는 법
 
-| 변수 | 필요한 경우 | 발급처 |
-|------|-----------|--------|
-| `JIRA_URL` | Jira 기능 사용 시 | Atlassian URL |
-| `JIRA_EMAIL` | Jira 기능 사용 시 | 본인 이메일 |
-| `JIRA_API_TOKEN` | Jira 기능 사용 시 | [토큰 발급 →](#jira-api-토큰) |
-| `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub 기능 사용 시 | [토큰 발급 →](#github-personal-access-token) |
-| `GOOGLE_CLIENT_ID` | Draw.io 기능 사용 시 | [OAuth 설정 →](#google-drive-oauth) |
-| `GOOGLE_CLIENT_SECRET` | Draw.io 기능 사용 시 | Google Cloud Console |
-| `GOOGLE_REFRESH_TOKEN` | Draw.io 기능 사용 시 | OAuth 인증 흐름 |
+1. 브라우저에서 Jira 보드 열기
+2. URL 확인:
+   ```
+   https://your-domain.atlassian.net/jira/software/projects/KAN/boards/1
+                                                                       ^
+                                                              이 숫자가 board_id
+   ```
+3. `/boards/` 뒤의 숫자를 복사
 
-> `JIRA_INSTANCE_URL`, `JIRA_USER_EMAIL`, `JIRA_API_KEY`도 별칭으로 사용 가능합니다.
-> 설치 스크립트가 기존 Claude Code의 Jira 설정을 자동 감지합니다.
+#### folder_id 찾는 법 (Google Drive)
+
+1. `.drawio` 파일이 있는 Google Drive 폴더 열기
+2. URL 확인:
+   ```
+   https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz
+                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                          이 문자열이 folder_id
+   ```
+3. `/folders/` 뒤의 문자열을 복사
+
+### Step 2: 환경 변수 (API 토큰)
+
+설치 스크립트가 자동으로 설정합니다. 수동으로 설정해야 할 경우:
+
+| 변수 | 용도 | 발급 방법 |
+|------|------|----------|
+| `JIRA_INSTANCE_URL` | Jira | Atlassian URL (예: `https://team.atlassian.net`) |
+| `JIRA_USER_EMAIL` | Jira | Atlassian 이메일 |
+| `JIRA_API_KEY` | Jira | [Jira 토큰 발급 →](#jira-api-토큰) |
+| `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub | [GitHub 토큰 발급 →](#github-personal-access-token) |
+| `GOOGLE_CLIENT_ID` | Draw.io | [Google OAuth 설정 →](#google-drive-oauth) |
+| `GOOGLE_CLIENT_SECRET` | Draw.io | Google Cloud Console |
+| `GOOGLE_REFRESH_TOKEN` | Draw.io | OAuth 인증 흐름 |
+
+> **별칭**: `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`도 사용 가능합니다 (설치 스크립트는 `JIRA_INSTANCE_URL` / `JIRA_USER_EMAIL` / `JIRA_API_KEY` 사용).
+>
+> **Google Drive**: 3개 변수 (`CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`)가 **모두** 설정되어야 합니다. 하나라도 빠지면 Draw.io 기능이 비활성화됩니다.
 
 ### 토큰 발급 가이드
 
@@ -196,7 +312,7 @@ matching:
 
 1. https://id.atlassian.com/manage-profile/security/api-tokens 접속
 2. **"API 토큰 만들기"** → 라벨 입력 (예: `archflow`)
-3. 토큰 복사 → 설치 스크립트에 붙여넣기
+3. 토큰 복사 → 설치 스크립트 또는 `.mcp.json`에 붙여넣기
 
 </details>
 
@@ -206,7 +322,7 @@ matching:
 1. https://github.com/settings/tokens?type=beta 접속
 2. **"Generate new token"** → 이름: `archflow`
 3. 권한 → Repository: **Contents**, **Pull requests**, **Metadata** (모두 Read-only)
-4. 토큰 복사 → 설치 스크립트에 붙여넣기
+4. 토큰 복사 → 설치 스크립트 또는 `.mcp.json`에 붙여넣기
 
 </details>
 
@@ -230,7 +346,7 @@ matching:
 
 ```mermaid
 graph TB
-    User["사용자 질문"] --> Server["ArchFlow MCP Server"]
+    User["사용자 질문"] --> Server
 
     subgraph Server["ArchFlow MCP Server"]
         Cache["캐시 (TTL)"]
@@ -251,21 +367,36 @@ graph TB
 
 ## 문제 해결
 
-| 증상 | 해결 |
-|------|------|
-| Claude Code에서 서버 안 보임 | JSON 문법 확인: `python3 -m json.tool ~/.claude/.mcp.json` |
-| "Jira not configured" | `JIRA_URL` 환경변수 설정 확인 |
-| "GitHub not configured" | MCP 설정에 `GITHUB_PERSONAL_ACCESS_TOKEN` 추가 |
-| Draw.io 파일 안 보임 | `folder_id` + Google OAuth 토큰 확인 |
-| 데이터가 오래됨 | 기본 캐시 30분. 서버 재시작으로 초기화 |
-| GitHub rate limit | Search API 30회/분 제한. 캐시 자동 사용 |
+### 설정 체크리스트
+
+설정이 정상인지 확인하는 명령어:
 
 ```bash
-# 설정 확인
-python3 -m json.tool ~/.claude/.mcp.json   # 설정 문법
-cd archflow && uv run archflow              # 서버 시작 확인 (Ctrl+C)
-uv run python -m pytest tests/ -v           # 테스트 실행
+# 1. Python 버전 확인 (3.11+ 필요)
+python --version
+
+# 2. MCP 설정이 유효한 JSON인지 확인
+python -m json.tool ~/.claude/.mcp.json          # macOS/Linux
+python -m json.tool %USERPROFILE%\.claude\.mcp.json   # Windows
+
+# 3. 서버가 에러 없이 시작되는지 확인
+cd archflow && uv run archflow
+# (Ctrl+C로 종료 — 에러 없으면 정상)
 ```
+
+### 자주 묻는 문제
+
+| 증상 | 원인 | 해결 |
+|------|------|------|
+| Claude Code에서 서버 안 보임 | MCP 설정 미등록 | 설치 스크립트 재실행, 또는 `.mcp.json`에 수동 추가 ([수동 설치 참고](#수동-설치-스크립트-없이)) |
+| `"Jira not configured"` | `JIRA_INSTANCE_URL` 환경변수 누락 | `.mcp.json` → `archflow.env`에 Jira 변수 3개 모두 있는지 확인 |
+| `"GitHub not configured"` | `GITHUB_PERSONAL_ACCESS_TOKEN` 누락 | `.mcp.json` → `archflow.env`에 추가 |
+| Draw.io 파일 안 보임 | `folder_id` 오류 또는 OAuth 토큰 누락 | config의 `folder_id` 확인 ([찾는 법 →](#folder_id-찾는-법-google-drive)) + Google 환경변수 3개 확인 |
+| 데이터가 오래됨 | API 응답 캐시됨 | 기본 TTL 30분. Claude Code 재시작으로 캐시 초기화 |
+| GitHub rate limit | Search API 30회/분 제한 | 잠시 후 재시도 — 결과는 자동 캐시됨 |
+| `bash: command not found` (Windows) | PowerShell에서 bash 스크립트 실행 시도 | `powershell -ExecutionPolicy Bypass -File scripts\install.ps1` 사용 |
+| 서버 시작 시 `SyntaxError` | Python 버전 부족 | `python --version` 확인 — 3.11+ 필요 |
+| MCP 설정 파싱 에러 | `.mcp.json` JSON 문법 오류 | `python -m json.tool ~/.claude/.mcp.json` 으로 에러 위치 확인 |
 
 ---
 
@@ -285,7 +416,7 @@ src/archflow/
 │   ├── github_provider.py   # GitHub 데이터 가공
 │   └── drawio_provider.py   # Draw.io XML 파싱 + 데이터 가공
 ├── core/              # 공통 인프라
-│   ├── config.py            # YAML 설정 로드
+│   ├── config.py            # YAML 설정 로더
 │   ├── cache.py             # TTL 캐시
 │   ├── matcher.py           # 크로스소스 매칭 엔진
 │   └── models.py            # Pydantic 모델
@@ -300,14 +431,9 @@ src/archflow/
 ### 개발 환경 설정
 
 ```bash
-# 의존성 설치
-uv sync --dev
-
-# 테스트
-uv run python -m pytest tests/ -v
-
-# 린트
-uv run ruff check src/
+uv sync --dev                          # 개발 의존성 설치
+uv run python -m pytest tests/ -v      # 테스트 실행
+uv run ruff check src/                 # 린트
 ```
 
 ### 어디서부터 봐야 하나?
