@@ -344,6 +344,15 @@ These are set automatically by the install script. If you need to set them manua
 
 ## Architecture
 
+<p align="center">
+  <img src="docs/archflow_architecture.png" alt="ArchFlow Architecture" width="600" />
+</p>
+
+**Token efficiency**: All API responses are cached with configurable TTL. Repeated questions = 0 API calls.
+
+<details>
+<summary>Mermaid (text version)</summary>
+
 ```mermaid
 graph TB
     User["User Question"] --> Server
@@ -361,7 +370,7 @@ graph TB
     DP --> GDrive["Google Drive (.drawio)"]
 ```
 
-**Token efficiency**: All API responses are cached with configurable TTL. Repeated questions = 0 API calls.
+</details>
 
 ---
 

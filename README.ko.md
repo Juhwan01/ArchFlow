@@ -344,6 +344,15 @@ gdrive:
 
 ## 아키텍처
 
+<p align="center">
+  <img src="docs/archflow_architecture.png" alt="ArchFlow 아키텍처" width="600" />
+</p>
+
+**토큰 절감**: 모든 API 응답은 TTL 캐시. 같은 질문 반복 시 API 호출 0.
+
+<details>
+<summary>Mermaid (텍스트 버전)</summary>
+
 ```mermaid
 graph TB
     User["사용자 질문"] --> Server
@@ -361,7 +370,7 @@ graph TB
     DP --> GDrive["Google Drive (.drawio)"]
 ```
 
-**토큰 절감**: 모든 API 응답은 TTL 캐시. 같은 질문 반복 시 API 호출 0.
+</details>
 
 ---
 
