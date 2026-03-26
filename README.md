@@ -54,102 +54,58 @@ ArchFlow traces across 3 sources:
 
 ## Quick Start
 
-### Prerequisites
-
-| Tool | Check | Install |
-|------|-------|---------|
-| Python 3.11+ | `python --version` | [python.org](https://python.org) |
-| uv | `uv --version` | See below |
-| Claude Code | Already using it | [claude.ai/code](https://claude.ai/code) |
-
-<details>
-<summary><strong>Install uv</strong></summary>
+### Install & Setup (2 commands)
 
 ```bash
-# macOS / Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# 1. Install
+pip install archflow-hub      # or: uvx archflow-hub
 
-# Windows (PowerShell)
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+# 2. Interactive setup (validates tokens, generates config, registers MCP)
+archflow init
 ```
 
-</details>
+That's it! Restart Claude Code and try `/status` or `/onboard`.
 
-### Automated Install (recommended)
+### Health Check
 
 ```bash
-# 1. Clone
-git clone https://github.com/your-org/archflow.git
-cd archflow
-
-# 2. Run installer
-# macOS / Linux
-bash scripts/install.sh
-
-# Windows (PowerShell)
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1
-
-# 3. Edit project config (set your Jira projects, GitHub repos)
-code archflow.config.yml    # or any editor
-
-# 4. Restart Claude Code — done!
+archflow doctor               # verify all connections
 ```
 
 > **Partial setup OK** — GitHub or Google Drive credentials can be skipped. ArchFlow works with whatever sources are configured.
 
 <details>
-<summary><strong>Manual Install (without script)</strong></summary>
+<summary><strong>Manual Install (advanced)</strong></summary>
 
-If you prefer to set things up manually or the script doesn't work on your system:
+If you prefer to set things up manually:
 
 ```bash
-# 1. Install dependencies
-cd archflow
-uv sync          # or: pip install -e .
+# 1. Install
+pip install archflow-hub
 
-# 2. Copy config template
-cp archflow.config.example.yml archflow.config.yml
-# Edit archflow.config.yml with your projects/repos
-```
+# 2. Create config manually at ~/.archflow/config.yml
+# See archflow.config.example.yml for the template
 
-**3. Register MCP server** — add this to `~/.claude/.mcp.json` (create the file if it doesn't exist):
-
-```jsonc
-{
-  "mcpServers": {
-    "archflow": {
-      "command": "uv",
-      "args": ["--directory", "/absolute/path/to/archflow", "run", "archflow"],
-      "env": {
-        "PYTHONUNBUFFERED": "1",
-        "ARCHFLOW_CONFIG_PATH": "/absolute/path/to/archflow/archflow.config.yml",
-
-        // Jira (required for Jira features)
-        "JIRA_INSTANCE_URL": "https://your-domain.atlassian.net",
-        "JIRA_USER_EMAIL": "you@example.com",
-        "JIRA_API_KEY": "your-jira-api-token",
-
-        // GitHub (optional)
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx",
-
-        // Google Drive / Draw.io (optional)
-        "GOOGLE_CLIENT_ID": "...",
-        "GOOGLE_CLIENT_SECRET": "...",
-        "GOOGLE_REFRESH_TOKEN": "..."
-      }
-    }
+# 3. Register MCP server via claude mcp add-json (includes env vars)
+claude mcp add-json archflow '{
+  "command": "uvx",
+  "args": ["archflow-hub"],
+  "env": {
+    "PYTHONUNBUFFERED": "1",
+    "ARCHFLOW_CONFIG_PATH": "~/.archflow/config.yml",
+    "JIRA_URL": "https://your-domain.atlassian.net",
+    "JIRA_EMAIL": "you@example.com",
+    "JIRA_API_TOKEN": "your-jira-api-token",
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx"
   }
-}
+}'
 ```
 
-> **MCP config file location**:
-> - macOS / Linux: `~/.claude/.mcp.json`
-> - Windows: `C:\Users\<username>\.claude\.mcp.json`
+> **Note**: `claude mcp add` (without `-json`) does **not** pass environment variables. Use `add-json` for manual registration, or just run `archflow init` which handles everything automatically.
 
-**4. Install slash commands** (optional):
+**Install slash commands** (optional):
 
 ```bash
-# Copy skill files to Claude Code skills directory
 # macOS / Linux
 cp -r skills/archflow-* ~/.claude/skills/
 
@@ -157,7 +113,7 @@ cp -r skills/archflow-* ~/.claude/skills/
 Copy-Item -Recurse skills\archflow-* $env:USERPROFILE\.claude\skills\
 ```
 
-**5. Restart Claude Code.**
+Restart Claude Code.
 
 </details>
 
@@ -246,7 +202,7 @@ After installation, use these in Claude Code:
 
 ### Step 1: `archflow.config.yml`
 
-After running the installer, edit `archflow.config.yml` in the project root:
+After running `archflow init`, config is saved at `~/.archflow/config.yml`. You can edit it anytime:
 
 ```yaml
 jira:
@@ -289,7 +245,7 @@ gdrive:
 
 ### Step 2: Environment Variables (API Tokens)
 
-These are set automatically by the install script. If you need to set them manually:
+These are set automatically by `archflow init`. If you need to set them manually:
 
 | Variable | For | How to get |
 |----------|-----|-----------|
@@ -312,7 +268,7 @@ These are set automatically by the install script. If you need to set them manua
 
 1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
 2. Click **"Create API token"** → enter label (e.g., `archflow`)
-3. Copy token → paste into installer or `.mcp.json`
+3. Copy token → paste into `archflow init` or `.mcp.json`
 
 </details>
 
@@ -322,7 +278,7 @@ These are set automatically by the install script. If you need to set them manua
 1. Go to https://github.com/settings/tokens?type=beta
 2. **Generate new token** → name it `archflow`
 3. Permissions → Repository: **Contents**, **Pull requests**, **Metadata** (all Read-only)
-4. Copy token → paste into installer or `.mcp.json`
+4. Copy token → paste into `archflow init` or `.mcp.json`
 
 </details>
 
@@ -378,26 +334,18 @@ graph TB
 
 ### Setup Checklist
 
-Run these to verify your setup is working:
-
 ```bash
-# 1. Check Python version (need 3.11+)
-python --version
-
-# 2. Check MCP config is valid JSON
-python -m json.tool ~/.claude/.mcp.json          # macOS/Linux
-python -m json.tool %USERPROFILE%\.claude\.mcp.json   # Windows
-
-# 3. Check server starts without errors
-cd archflow && uv run archflow
-# (Ctrl+C to stop — if no errors, it works)
+# Run the built-in diagnostic
+archflow doctor
 ```
+
+This checks Python version, config file, API connections, and MCP registration in one command.
 
 ### Common Issues
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| Server not in Claude Code | MCP config not registered | Run install script again, or add manually to `.mcp.json` ([see manual install](#manual-install-without-script)) |
+| Server not in Claude Code | MCP config not registered | Run `archflow init` or add manually with `claude mcp add-json` ([see manual install](#manual-install-advanced)) |
 | `"Jira not configured"` | `JIRA_INSTANCE_URL` env var missing | Check `.mcp.json` → `archflow.env` has all 3 Jira variables |
 | `"GitHub not configured"` | `GITHUB_PERSONAL_ACCESS_TOKEN` missing | Add to `.mcp.json` → `archflow.env` |
 | Draw.io files not found | Wrong `folder_id` or missing OAuth tokens | Check `folder_id` in config ([how to find →](#how-to-find-folder_id-google-drive)) and all 3 Google env vars |
@@ -415,6 +363,9 @@ cd archflow && uv run archflow
 
 ```
 src/archflow/
+├── cli.py             # CLI dispatcher (init, doctor, serve)
+├── cli_init.py        # Interactive setup wizard
+├── cli_doctor.py      # Connection diagnostics
 ├── server.py          # MCP server entry point + lifespan
 ├── clients/           # HTTP clients
 │   ├── jira_client.py       # Jira REST API calls

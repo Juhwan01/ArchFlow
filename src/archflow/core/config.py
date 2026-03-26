@@ -62,6 +62,33 @@ class ArchFlowConfig(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+def resolve_config_path(path: str | None = None) -> str | None:
+    """Find config file path.
+
+    Resolution order:
+    1. Explicit path argument
+    2. ARCHFLOW_CONFIG_PATH env var
+    3. ./archflow.config.yml (cwd)
+    4. ~/.archflow/config.yml (home)
+    """
+    if path and Path(path).exists():
+        return path
+
+    env_path = os.environ.get("ARCHFLOW_CONFIG_PATH", "")
+    if env_path and Path(env_path).exists():
+        return env_path
+
+    cwd_default = Path("archflow.config.yml")
+    if cwd_default.exists():
+        return str(cwd_default)
+
+    home_default = Path.home() / ".archflow" / "config.yml"
+    if home_default.exists():
+        return str(home_default)
+
+    return None
+
+
 def load_config(path: str | None = None) -> ArchFlowConfig:
     """Load config from YAML file.
 
@@ -69,16 +96,12 @@ def load_config(path: str | None = None) -> ArchFlowConfig:
     1. Explicit path argument
     2. ARCHFLOW_CONFIG_PATH env var
     3. ./archflow.config.yml (cwd)
-    4. Empty defaults
+    4. ~/.archflow/config.yml (home)
+    5. Empty defaults
     """
-    config_path = path or os.environ.get("ARCHFLOW_CONFIG_PATH", "")
+    config_path = resolve_config_path(path)
 
-    if not config_path:
-        default = Path("archflow.config.yml")
-        if default.exists():
-            config_path = str(default)
-
-    if config_path and Path(config_path).exists():
+    if config_path:
         with open(config_path, encoding="utf-8") as f:
             raw = yaml.safe_load(f) or {}
         return ArchFlowConfig.model_validate(raw)

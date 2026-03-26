@@ -54,102 +54,58 @@ ArchFlow가 3개 소스를 추적합니다:
 
 ## 빠른 시작
 
-### 사전 준비
-
-| 도구 | 확인 방법 | 설치 |
-|------|----------|------|
-| Python 3.11+ | `python --version` | [python.org](https://python.org) |
-| uv | `uv --version` | 아래 참고 |
-| Claude Code | 이미 사용 중이면 OK | [claude.ai/code](https://claude.ai/code) |
-
-<details>
-<summary><strong>uv 설치</strong></summary>
+### 설치 & 설정 (2줄이면 끝)
 
 ```bash
-# macOS / Linux
-curl -LsSf https://astral.sh/uv/install.sh | sh
+# 1. 설치
+pip install archflow-hub      # 또는: uvx archflow-hub
 
-# Windows (PowerShell)
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+# 2. 대화형 설정 (토큰 검증 → config 생성 → MCP 자동 등록)
+archflow init
 ```
 
-</details>
+Claude Code 재시작 후 `/status` 또는 `/onboard`을 사용해 보세요.
 
-### 자동 설치 (권장)
+### 상태 확인
 
 ```bash
-# 1. 클론
-git clone https://github.com/your-org/archflow.git
-cd archflow
-
-# 2. 설치 실행
-# macOS / Linux
-bash scripts/install.sh
-
-# Windows (PowerShell)
-powershell -ExecutionPolicy Bypass -File scripts\install.ps1
-
-# 3. 프로젝트 설정 편집 (Jira 프로젝트, GitHub 레포 지정)
-code archflow.config.yml    # 또는 아무 에디터
-
-# 4. Claude Code 재시작 — 끝!
+archflow doctor               # 모든 연결 상태 점검
 ```
 
 > **부분 설정 가능** — GitHub이나 Google Drive 없이도 동작합니다. 연결된 소스만으로 작동합니다.
 
 <details>
-<summary><strong>수동 설치 (스크립트 없이)</strong></summary>
+<summary><strong>수동 설치 (고급)</strong></summary>
 
-스크립트가 안 되거나 직접 설정하고 싶을 때:
+직접 설정하고 싶을 때:
 
 ```bash
-# 1. 의존성 설치
-cd archflow
-uv sync          # 또는: pip install -e .
+# 1. 설치
+pip install archflow-hub
 
-# 2. 설정 파일 복사
-cp archflow.config.example.yml archflow.config.yml
-# archflow.config.yml을 열어 프로젝트/레포 정보 입력
-```
+# 2. 설정 파일 직접 생성: ~/.archflow/config.yml
+# archflow.config.example.yml 템플릿 참고
 
-**3. MCP 서버 등록** — `~/.claude/.mcp.json` 파일에 추가 (없으면 새로 만들기):
-
-```jsonc
-{
-  "mcpServers": {
-    "archflow": {
-      "command": "uv",
-      "args": ["--directory", "/absolute/path/to/archflow", "run", "archflow"],
-      "env": {
-        "PYTHONUNBUFFERED": "1",
-        "ARCHFLOW_CONFIG_PATH": "/absolute/path/to/archflow/archflow.config.yml",
-
-        // Jira (Jira 기능 사용 시 필수)
-        "JIRA_INSTANCE_URL": "https://your-domain.atlassian.net",
-        "JIRA_USER_EMAIL": "you@example.com",
-        "JIRA_API_KEY": "your-jira-api-token",
-
-        // GitHub (선택)
-        "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx",
-
-        // Google Drive / Draw.io (선택)
-        "GOOGLE_CLIENT_ID": "...",
-        "GOOGLE_CLIENT_SECRET": "...",
-        "GOOGLE_REFRESH_TOKEN": "..."
-      }
-    }
+# 3. MCP 서버 등록 (claude mcp add-json으로 환경변수 포함)
+claude mcp add-json archflow '{
+  "command": "uvx",
+  "args": ["archflow-hub"],
+  "env": {
+    "PYTHONUNBUFFERED": "1",
+    "ARCHFLOW_CONFIG_PATH": "~/.archflow/config.yml",
+    "JIRA_URL": "https://your-domain.atlassian.net",
+    "JIRA_EMAIL": "you@example.com",
+    "JIRA_API_TOKEN": "your-jira-api-token",
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "ghp_xxxxxxxxxxxx"
   }
-}
+}'
 ```
 
-> **MCP 설정 파일 위치**:
-> - macOS / Linux: `~/.claude/.mcp.json`
-> - Windows: `C:\Users\<사용자명>\.claude\.mcp.json`
+> **참고**: `claude mcp add` (add-json 없이)는 환경변수를 전달하지 **않습니다**. 수동 등록 시 `add-json`을 사용하거나, `archflow init`을 실행하면 모든 것을 자동 처리합니다.
 
-**4. 슬래시 명령어 설치** (선택):
+**슬래시 명령어 설치** (선택):
 
 ```bash
-# 스킬 파일을 Claude Code 스킬 디렉토리에 복사
 # macOS / Linux
 cp -r skills/archflow-* ~/.claude/skills/
 
@@ -157,7 +113,7 @@ cp -r skills/archflow-* ~/.claude/skills/
 Copy-Item -Recurse skills\archflow-* $env:USERPROFILE\.claude\skills\
 ```
 
-**5. Claude Code 재시작.**
+Claude Code 재시작.
 
 </details>
 
@@ -246,7 +202,7 @@ Copy-Item -Recurse skills\archflow-* $env:USERPROFILE\.claude\skills\
 
 ### Step 1: `archflow.config.yml`
 
-설치 스크립트 실행 후 프로젝트 루트의 `archflow.config.yml`을 편집:
+`archflow init` 실행 후 `~/.archflow/config.yml`에 설정이 저장됩니다. 언제든 편집 가능:
 
 ```yaml
 jira:
@@ -289,7 +245,7 @@ gdrive:
 
 ### Step 2: 환경 변수 (API 토큰)
 
-설치 스크립트가 자동으로 설정합니다. 수동으로 설정해야 할 경우:
+`archflow init`이 자동으로 설정합니다. 수동으로 설정해야 할 경우:
 
 | 변수 | 용도 | 발급 방법 |
 |------|------|----------|
@@ -312,7 +268,7 @@ gdrive:
 
 1. https://id.atlassian.com/manage-profile/security/api-tokens 접속
 2. **"API 토큰 만들기"** → 라벨 입력 (예: `archflow`)
-3. 토큰 복사 → 설치 스크립트 또는 `.mcp.json`에 붙여넣기
+3. 토큰 복사 → `archflow init` 또는 `.mcp.json`에 붙여넣기
 
 </details>
 
@@ -322,7 +278,7 @@ gdrive:
 1. https://github.com/settings/tokens?type=beta 접속
 2. **"Generate new token"** → 이름: `archflow`
 3. 권한 → Repository: **Contents**, **Pull requests**, **Metadata** (모두 Read-only)
-4. 토큰 복사 → 설치 스크립트 또는 `.mcp.json`에 붙여넣기
+4. 토큰 복사 → `archflow init` 또는 `.mcp.json`에 붙여넣기
 
 </details>
 
@@ -378,26 +334,18 @@ graph TB
 
 ### 설정 체크리스트
 
-설정이 정상인지 확인하는 명령어:
-
 ```bash
-# 1. Python 버전 확인 (3.11+ 필요)
-python --version
-
-# 2. MCP 설정이 유효한 JSON인지 확인
-python -m json.tool ~/.claude/.mcp.json          # macOS/Linux
-python -m json.tool %USERPROFILE%\.claude\.mcp.json   # Windows
-
-# 3. 서버가 에러 없이 시작되는지 확인
-cd archflow && uv run archflow
-# (Ctrl+C로 종료 — 에러 없으면 정상)
+# 내장 진단 도구 실행
+archflow doctor
 ```
+
+Python 버전, config 파일, API 연결, MCP 등록 상태를 한 번에 확인합니다.
 
 ### 자주 묻는 문제
 
 | 증상 | 원인 | 해결 |
 |------|------|------|
-| Claude Code에서 서버 안 보임 | MCP 설정 미등록 | 설치 스크립트 재실행, 또는 `.mcp.json`에 수동 추가 ([수동 설치 참고](#수동-설치-스크립트-없이)) |
+| Claude Code에서 서버 안 보임 | MCP 설정 미등록 | `archflow init` 재실행, 또는 `claude mcp add-json`으로 수동 추가 ([수동 설치 참고](#수동-설치-고급)) |
 | `"Jira not configured"` | `JIRA_INSTANCE_URL` 환경변수 누락 | `.mcp.json` → `archflow.env`에 Jira 변수 3개 모두 있는지 확인 |
 | `"GitHub not configured"` | `GITHUB_PERSONAL_ACCESS_TOKEN` 누락 | `.mcp.json` → `archflow.env`에 추가 |
 | Draw.io 파일 안 보임 | `folder_id` 오류 또는 OAuth 토큰 누락 | config의 `folder_id` 확인 ([찾는 법 →](#folder_id-찾는-법-google-drive)) + Google 환경변수 3개 확인 |
@@ -415,6 +363,9 @@ cd archflow && uv run archflow
 
 ```
 src/archflow/
+├── cli.py             # CLI 디스패처 (init, doctor, serve)
+├── cli_init.py        # 대화형 설정 마법사
+├── cli_doctor.py      # 연결 상태 진단
 ├── server.py          # MCP 서버 엔트리포인트 + lifespan
 ├── clients/           # HTTP 클라이언트
 │   ├── jira_client.py       # Jira REST API 호출

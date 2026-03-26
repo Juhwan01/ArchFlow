@@ -63,7 +63,9 @@ class TestConfigLoading:
         assert mapping.github_path_prefix == "src/auth/"
         assert config.matching.auto_match.min_score == 0.8
 
-    def test_returns_defaults_when_no_file(self):
+    def test_returns_defaults_when_no_file(self, tmp_path: Path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ARCHFLOW_CONFIG_PATH", raising=False)
         config = load_config("/nonexistent/path.yml")
         assert isinstance(config, ArchFlowConfig)
         assert config.jira.projects == []
