@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastmcp import Context
+
 
 def register_search_tools(mcp, get_providers) -> None:  # noqa: ANN001
     """Register unified search tool."""
@@ -11,8 +13,8 @@ def register_search_tools(mcp, get_providers) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_search(
         query: str,
+        ctx: Context,
         sources: list[str] | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """Jira + GitHub + 다이어그램 통합 검색. 모든 소스에서 한번에 검색.
 

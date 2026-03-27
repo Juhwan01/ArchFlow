@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastmcp import Context
+
 
 def register_jira_tools(mcp, get_jira) -> None:  # noqa: ANN001
     """Register all Jira tools on the MCP server.
@@ -16,7 +18,7 @@ def register_jira_tools(mcp, get_jira) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_jira_get_issue(
         issue_key: str,
-        ctx=None,
+        ctx: Context,
     ) -> dict[str, Any]:
         """Jira 이슈 상세 조회 (댓글, 링크, 서브태스크 포함).
 
@@ -29,8 +31,8 @@ def register_jira_tools(mcp, get_jira) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_jira_sprint_status(
         project_key: str,
+        ctx: Context,
         board_id: str | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """현재 스프린트의 이슈를 상태별(To Do/In Progress/Done)로 그룹핑하여 조회.
 
@@ -44,8 +46,8 @@ def register_jira_tools(mcp, get_jira) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_jira_search(
         jql: str,
+        ctx: Context,
         max_results: int = 50,
-        ctx=None,
     ) -> dict[str, Any]:
         """JQL로 Jira 이슈 검색.
 
@@ -59,8 +61,8 @@ def register_jira_tools(mcp, get_jira) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_jira_user_workload(
         user_name: str,
+        ctx: Context,
         project_key: str | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """특정 사용자에게 할당된 이슈 현황 조회.
 
@@ -75,7 +77,7 @@ def register_jira_tools(mcp, get_jira) -> None:  # noqa: ANN001
     async def archflow_jira_component_status(
         component_name: str,
         project_key: str,
-        ctx=None,
+        ctx: Context,
     ) -> dict[str, Any]:
         """Jira 컴포넌트별 이슈 진행률 조회.
 
@@ -89,8 +91,8 @@ def register_jira_tools(mcp, get_jira) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_jira_recent_activity(
         project_key: str,
+        ctx: Context,
         days: int = 7,
-        ctx=None,
     ) -> dict[str, Any]:
         """최근 N일간 업데이트된 이슈 목록.
 
@@ -104,7 +106,7 @@ def register_jira_tools(mcp, get_jira) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_jira_epic_progress(
         epic_key: str,
-        ctx=None,
+        ctx: Context,
     ) -> dict[str, Any]:
         """에픽의 하위 이슈와 완료율 조회.
 

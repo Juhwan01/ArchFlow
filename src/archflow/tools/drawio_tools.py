@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastmcp import Context
+
 
 def register_drawio_tools(mcp, get_drawio) -> None:  # noqa: ANN001
     """Register all Draw.io tools on the MCP server."""
 
     @mcp.tool()
     async def archflow_drawio_list_diagrams(
-        ctx=None,
+        ctx: Context,
     ) -> list[dict[str, Any]]:
         """Google Drive 폴더의 .drawio 파일 목록 조회."""
         drawio = get_drawio(ctx)
@@ -19,7 +21,7 @@ def register_drawio_tools(mcp, get_drawio) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_drawio_get_diagram(
         file_name: str,
-        ctx=None,
+        ctx: Context,
     ) -> list[dict[str, Any]]:
         """특정 .drawio 파일의 모든 노드와 연결 관계를 파싱하여 반환.
 
@@ -32,7 +34,7 @@ def register_drawio_tools(mcp, get_drawio) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_drawio_search_nodes(
         query: str,
-        ctx=None,
+        ctx: Context,
     ) -> list[dict[str, Any]]:
         """모든 다이어그램에서 노드 라벨로 검색.
 
@@ -45,8 +47,8 @@ def register_drawio_tools(mcp, get_drawio) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_drawio_node_connections(
         node_label: str,
+        ctx: Context,
         file_name: str | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """특정 노드의 모든 연결 관계 조회 (인바운드/아웃바운드).
 

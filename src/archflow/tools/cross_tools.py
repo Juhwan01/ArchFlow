@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastmcp import Context
+
 
 def register_cross_tools(mcp, get_providers) -> None:  # noqa: ANN001
     """Register cross-source tools.
@@ -16,8 +18,8 @@ def register_cross_tools(mcp, get_providers) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_trace_issue(
         issue_key: str,
+        ctx: Context,
         repo: str | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """Jira 이슈 → 관련 PR + 코드 위치 + 아키텍처 다이어그램 노드를 추적.
 
@@ -54,9 +56,9 @@ def register_cross_tools(mcp, get_providers) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_trace_component(
         component_name: str,
+        ctx: Context,
         project_key: str | None = None,
         repo: str | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """아키텍처 컴포넌트 → 관련 Jira 이슈 + PR + 다이어그램 연결 관계 추적.
 
@@ -103,8 +105,8 @@ def register_cross_tools(mcp, get_providers) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_project_overview(
         project_key: str,
+        ctx: Context,
         repo: str | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """프로젝트 종합 현황: 스프린트 상태 + 아키텍처 요약 + GitHub 활동.
 
@@ -134,9 +136,9 @@ def register_cross_tools(mcp, get_providers) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_team_activity(
         project_key: str,
+        ctx: Context,
         repo: str | None = None,
         days: int = 7,
-        ctx=None,
     ) -> dict[str, Any]:
         """주간 팀 활동 보고서: 누가 뭘 했는지, PR 현황, 이슈 완료 현황.
 
@@ -171,8 +173,8 @@ def register_cross_tools(mcp, get_providers) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_onboarding_context(
         project_key: str,
+        ctx: Context,
         repo: str | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """신규 팀원용 프로젝트 전체 맥락: 구조, 현재 작업, 핵심 인물.
 

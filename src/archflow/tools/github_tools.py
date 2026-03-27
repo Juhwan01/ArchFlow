@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from fastmcp import Context
+
 
 def register_github_tools(mcp, get_github) -> None:  # noqa: ANN001
     """Register all GitHub tools on the MCP server."""
@@ -12,7 +14,7 @@ def register_github_tools(mcp, get_github) -> None:  # noqa: ANN001
     async def archflow_github_get_pr(
         repo: str,
         pr_number: int,
-        ctx=None,
+        ctx: Context,
     ) -> dict[str, Any]:
         """GitHub PR 상세 조회 (diff stats, 리뷰, 연결 이슈).
 
@@ -26,10 +28,10 @@ def register_github_tools(mcp, get_github) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_github_list_prs(
         repo: str,
+        ctx: Context,
         state: str = "open",
         author: str | None = None,
         head: str | None = None,
-        ctx=None,
     ) -> dict[str, Any]:
         """GitHub PR 목록 조회 (필터링 가능).
 
@@ -46,7 +48,7 @@ def register_github_tools(mcp, get_github) -> None:  # noqa: ANN001
     async def archflow_github_pr_for_issue(
         repo: str,
         issue_key: str,
-        ctx=None,
+        ctx: Context,
     ) -> dict[str, Any]:
         """Jira 이슈 키와 관련된 GitHub PR 찾기 (제목, 브랜치, 본문에서 검색).
 
@@ -60,9 +62,9 @@ def register_github_tools(mcp, get_github) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_github_recent_commits(
         repo: str,
+        ctx: Context,
         branch: str | None = None,
         since_days: int = 7,
-        ctx=None,
     ) -> dict[str, Any]:
         """최근 커밋 목록 조회.
 
@@ -78,7 +80,7 @@ def register_github_tools(mcp, get_github) -> None:  # noqa: ANN001
     async def archflow_github_search_code(
         repo: str,
         query: str,
-        ctx=None,
+        ctx: Context,
     ) -> dict[str, Any]:
         """GitHub 레포에서 코드 검색.
 
@@ -92,7 +94,7 @@ def register_github_tools(mcp, get_github) -> None:  # noqa: ANN001
     @mcp.tool()
     async def archflow_github_repo_overview(
         repo: str,
-        ctx=None,
+        ctx: Context,
     ) -> dict[str, Any]:
         """GitHub 레포 요약 정보 (언어, 최근 활동, 기여자).
 
