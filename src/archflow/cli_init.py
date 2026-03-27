@@ -285,24 +285,31 @@ def run_init() -> None:
     # ------------------------------------------------------------------
     print()
     print("  -- Google Drive / Draw.io (optional, Enter to skip) --")
-    print("  (Requires OAuth credentials — skip if not using Draw.io)")
+    print("  Service Account JSON key 파일 경로를 입력하세요.")
+    print("  (발급: Google Cloud Console > IAM > Service Accounts > Keys > JSON)")
     print()
 
-    google_client_id = _prompt("Google Client ID")
+    sa_key_path = _prompt("Service Account JSON key path")
     gdrive_folder_id = ""
 
-    if google_client_id:
-        google_client_secret = _prompt("Google Client Secret", secret=True)
-        google_refresh_token = _prompt("Google Refresh Token")
-        gdrive_folder_id = _prompt("Google Drive folder ID (containing .drawio files)")
-
-        if google_client_id and google_client_secret and google_refresh_token:
-            env_vars["GOOGLE_CLIENT_ID"] = google_client_id
-            env_vars["GOOGLE_CLIENT_SECRET"] = google_client_secret
-            env_vars["GOOGLE_REFRESH_TOKEN"] = google_refresh_token
-            _ok("Google Drive configured.")
+    if sa_key_path:
+        sa_key_path = str(Path(sa_key_path).expanduser().resolve())
+        if not Path(sa_key_path).is_file():
+            _fail(f"File not found: {sa_key_path}")
+            _skip("Google Drive skipped.")
         else:
-            _skip("Incomplete Google Drive credentials, skipping.")
+            try:
+                with open(sa_key_path, encoding="utf-8") as f:
+                    sa_data = json.load(f)
+                sa_email = sa_data.get("client_email", "")
+                _ok(f"Service Account: {sa_email}")
+                env_vars["GOOGLE_SERVICE_ACCOUNT_KEY"] = sa_key_path
+                gdrive_folder_id = _prompt("Google Drive folder ID (containing .drawio files)")
+                print()
+                print(f"  ** Drive 폴더를 {sa_email} 에 공유해야 접근 가능합니다 **")
+            except (json.JSONDecodeError, OSError) as e:
+                _fail(f"Invalid JSON key file: {e}")
+                _skip("Google Drive skipped.")
     else:
         _skip("Google Drive skipped.")
 
