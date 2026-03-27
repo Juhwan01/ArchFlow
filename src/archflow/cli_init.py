@@ -145,7 +145,7 @@ def _register_mcp(env_vars: dict) -> None:
     server_config = {
         "type": "stdio",
         "command": "uvx",
-        "args": ["--from", "archflow-hub", "archflow"],
+        "args": ["archflow-hub"],
         "env": {
             "PYTHONUNBUFFERED": "1",
             "ARCHFLOW_CONFIG_PATH": str(HOME_CONFIG_FILE),
@@ -347,7 +347,7 @@ def run_init() -> None:
     else:
         print()
         print("  Manual registration:")
-        print("    claude mcp add archflow --scope user -- uvx --from archflow-hub archflow")
+        print("    claude mcp add archflow --scope user -- uvx archflow-hub")
 
     # ------------------------------------------------------------------
     # Install slash commands

@@ -1,6 +1,6 @@
 [project]
 name = "archflow-hub"
-version = "0.2.2"
+version = "0.2.3"
 description = "Context Hub MCP Server - Jira + GitHub + Draw.io unified intelligence"
 readme = "README.md"
 license = { text = "MIT" }
@@ -29,6 +29,7 @@ Issues = "https://github.com/Juhwan01/ArchFlow/issues"
 
 [project.scripts]
 archflow = "archflow.cli:main"
+archflow-hub = "archflow.cli:main"
 
 [build-system]
 requires = ["hatchling"]

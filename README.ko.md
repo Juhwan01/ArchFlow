@@ -296,7 +296,7 @@ pip install archflow-hub   # 또는: uv pip install archflow-hub
 claude mcp add-json --scope user archflow '{
   "type": "stdio",
   "command": "uvx",
-  "args": ["--from", "archflow-hub", "archflow"],
+  "args": ["archflow-hub"],
   "env": {
     "PYTHONUNBUFFERED": "1",
     "ARCHFLOW_CONFIG_PATH": "~/.archflow/config.yml",
