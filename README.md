@@ -80,7 +80,7 @@ GitHub token       → ********  (optional, Enter to skip)
 Google Drive       → (optional, Enter to skip)
 ```
 
-After completion, **restart Claude Code** and try `/status` or `/onboard`.
+After completion, **restart Claude Code** and try `/archflow-status` or `/archflow-onboard`.
 
 ### Health Check
 
@@ -134,12 +134,12 @@ These work in Claude Code after install:
 
 | Command | What it does |
 |---------|-------------|
-| `/status` | Sprint progress, issue status, component completion |
-| `/trace` | Issue → PR → code → architecture tracing |
-| `/arch` | Architecture diagram queries and connections |
-| `/onboard` | Full project context for new team members |
-| `/report` | Weekly team activity report |
-| `/search` | Unified search across all sources |
+| `/archflow-status` | Sprint progress, issue status, component completion |
+| `/archflow-trace` | Issue → PR → code → architecture tracing |
+| `/archflow-arch` | Architecture diagram queries and connections |
+| `/archflow-onboard` | Full project context for new team members |
+| `/archflow-report` | Weekly team activity report |
+| `/archflow-search` | Unified search across all sources |
 
 > You can also ask naturally without slash commands — ArchFlow's 23 MCP tools are available to Claude directly.
 

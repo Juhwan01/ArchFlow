@@ -330,7 +330,7 @@ def run_init() -> None:
     # Install slash commands
     # ------------------------------------------------------------------
     print()
-    if _confirm("Install slash commands (/status, /arch, /trace, etc)?"):
+    if _confirm("Install slash commands (/archflow-status, /archflow-arch, etc)?"):
         try:
             installed = _install_skills()
             for name in installed:
@@ -366,5 +366,5 @@ def run_init() -> None:
     print()
     print("  Next steps:")
     print("    1. Restart Claude Code")
-    print("    2. Try: /status or /onboard")
+    print("    2. Try: /archflow-status or /archflow-onboard")
     print()

@@ -87,14 +87,14 @@ archflow init
 - API 연결이 되는지 검증
 - 설정 파일 생성 (`~/.archflow/config.yml`)
 - Claude Code에 MCP 서버 등록
-- 슬래시 커맨드 6개 설치 (`/status`, `/trace`, `/arch`, `/onboard`, `/report`, `/search`)
+- 슬래시 커맨드 6개 설치 (`/archflow-status`, `/archflow-trace`, `/archflow-arch`, `/archflow-onboard`, `/archflow-report`, `/archflow-search`)
 
 ### Step 3: Claude Code 재시작
 
 Claude Code를 **완전히 종료했다가 다시 실행**하세요. 그리고:
 
 ```
-/status
+/archflow-status
 ```
 
 결과가 나오면 설치 완료!
@@ -219,12 +219,12 @@ Claude Code에서 `/`를 입력하면 바로 쓸 수 있습니다:
 
 | 커맨드 | 설명 | 예시 |
 |--------|------|------|
-| `/status` | 진행 상황 확인 | "인증 기능 어디까지 됐어?" |
-| `/trace` | 이슈 → 코드 추적 | "KAN-123 관련 PR 찾아줘" |
-| `/arch` | 아키텍처 조회 | "Auth Service 연결 관계 보여줘" |
-| `/onboard` | 프로젝트 개요 | "이 프로젝트 전체 맥락 알려줘" |
-| `/report` | 팀 활동 보고서 | "이번 주 팀 리포트" |
-| `/search` | 통합 검색 | "Redis 관련된 거 전부" |
+| `/archflow-status` | 진행 상황 확인 | "인증 기능 어디까지 됐어?" |
+| `/archflow-trace` | 이슈 → 코드 추적 | "KAN-123 관련 PR 찾아줘" |
+| `/archflow-arch` | 아키텍처 조회 | "Auth Service 연결 관계 보여줘" |
+| `/archflow-onboard` | 프로젝트 개요 | "이 프로젝트 전체 맥락 알려줘" |
+| `/archflow-report` | 팀 활동 보고서 | "이번 주 팀 리포트" |
+| `/archflow-search` | 통합 검색 | "Redis 관련된 거 전부" |
 
 > 슬래시 커맨드 없이 자연어로 물어봐도 됩니다. Claude가 알아서 ArchFlow 도구를 사용합니다.
 
