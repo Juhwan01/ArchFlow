@@ -5,88 +5,288 @@
 <h1 align="center">ArchFlow</h1>
 
 <p align="center">
-  <strong>Jira + GitHub + Draw.io — 하나의 MCP 서버, 하나의 질문</strong>
+  <strong>Jira + GitHub + Draw.io 정보를 Claude Code에서 한번에 조회</strong>
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/pypi/v/archflow-hub?style=flat-square&color=blue" alt="PyPI" />
   <img src="https://img.shields.io/badge/python-3.11+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.11+" />
   <img src="https://img.shields.io/badge/MCP-compatible-00B4D8?style=flat-square" alt="MCP Compatible" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License" />
-  <img src="https://img.shields.io/badge/tools-23-orange?style=flat-square" alt="23 Tools" />
-  <img src="https://img.shields.io/badge/status-alpha-yellow?style=flat-square" alt="Alpha" />
 </p>
 
 <p align="center">
-  <a href="#빠른-시작">빠른 시작</a> ·
-  <a href="#도구">도구 (23개)</a> ·
-  <a href="#슬래시-명령어">명령어</a> ·
-  <a href="#설정-가이드">설정</a> ·
-  <a href="#기여-가이드">기여</a> ·
+  <a href="#-설치하기">설치하기</a> ·
+  <a href="#-이런-걸-할-수-있어요">활용 예시</a> ·
+  <a href="#-슬래시-커맨드">커맨드</a> ·
+  <a href="#-설정-가이드">설정</a> ·
+  <a href="#contributing">Contributing</a> ·
   <a href="./README.md">English</a>
 </p>
 
 ---
 
-## ArchFlow가 뭔가요?
+## 이게 뭔가요?
 
-ArchFlow는 LLM이 **Jira**, **GitHub**, **Draw.io** 다이어그램을 한 번에 조회할 수 있게 해주는 MCP 서버입니다. 탭 전환 없이 스프린트 현황 확인, 이슈-코드 추적, 시스템 아키텍처 탐색이 가능합니다.
+ArchFlow는 [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) 서버입니다.
+쉽게 말하면, **Claude Code에 Jira/GitHub/Draw.io 조회 기능을 추가해주는 플러그인**이에요.
 
-### 누가 쓰나요?
-
-| 역할 | 질문 예시 |
-|------|----------|
-| **대표 / PM** | "이번 스프린트 진행률?" · "이번주 팀 보고서 만들어줘" |
-| **신규 팀원** | "우리 시스템 구조 설명해줘" · "뭐부터 봐야 해?" |
-| **개발자** | "KAN-123 관련 코드 어디야?" · "인증 쪽 PR 뭐가 있어?" |
-
-### 데모
+설치하면 Claude Code 안에서 이렇게 쓸 수 있습니다:
 
 ```
-You: "KAN-42 관련 코드 어디에 있어?"
+You: "KAN-42 관련 코드 어디야?"
 
-ArchFlow가 3개 소스를 추적합니다:
-  ✓ Jira  → KAN-42: "OAuth2 로그인 추가" (진행중, @alice)
-  ✓ GitHub → PR #87 "feat: oauth2 login flow" (src/auth/oauth.ts)
-  ✓ Draw.io → Auth Service 노드 → API Gateway, User DB와 연결
+ArchFlow:
+  Jira   → KAN-42: "OAuth2 로그인 추가" (진행 중, @alice)
+  GitHub → PR #87 "feat: oauth2 login flow" (src/auth/oauth.ts)
+  Draw.io → Auth Service → API Gateway, User DB와 연결됨
 ```
+
+Jira 열고, GitHub 열고, 다이어그램 열고 할 필요 없이 **한 번에 다 나옵니다.**
 
 ---
 
-## 빠른 시작
+## 📦 설치하기
 
-### 설치 & 설정 (2줄이면 끝)
+### 먼저 확인할 것
+
+- **Python 3.11 이상** 설치되어 있어야 합니다 — [다운로드](https://www.python.org/downloads/)
+  - 확인 방법: 터미널에서 `python --version` 입력
+- **Claude Code**가 이미 설치되어 있어야 합니다
+- **Jira Cloud 계정** (필수) — GitHub, Google Drive는 나중에 추가해도 됩니다
+
+### Step 1: 설치
+
+터미널(또는 명령 프롬프트)을 열고:
 
 ```bash
-# 1. 설치
-pip install archflow-hub      # 또는: uvx archflow-hub
+pip install archflow-hub
+```
 
-# 2. 대화형 설정 (토큰 검증 → config 생성 → MCP 자동 등록)
+> `pip`이 안 되면 `pip3 install archflow-hub` 또는 `python -m pip install archflow-hub`을 시도하세요.
+
+### Step 2: 초기 설정
+
+```bash
 archflow init
 ```
 
-Claude Code 재시작 후 `/status` 또는 `/onboard`을 사용해 보세요.
+이 명령어를 실행하면 터미널에서 하나씩 물어봅니다:
 
-### 상태 확인
-
-```bash
-archflow doctor               # 모든 연결 상태 점검
+```
+1. Jira URL          → https://your-team.atlassian.net  (우리 팀 Jira 주소)
+2. Jira 이메일        → you@company.com
+3. Jira API 토큰      → ********  (아래에서 발급 방법 설명)
+4. Jira 프로젝트 키    → KAN  (Jira 보드 왼쪽 상단에 보이는 영문 키)
+5. Jira 보드 ID       → 1  (기본값, 아래에서 찾는 법 설명)
+6. GitHub 토큰        → (선택사항 — Enter 누르면 스킵)
+7. Google Drive 설정   → (선택사항 — Enter 누르면 스킵)
 ```
 
-> **부분 설정 가능** — GitHub이나 Google Drive 없이도 동작합니다. 연결된 소스만으로 작동합니다.
+입력하면 자동으로:
+- API 연결이 되는지 검증
+- 설정 파일 생성 (`~/.archflow/config.yml`)
+- Claude Code에 MCP 서버 등록
+- 슬래시 커맨드 6개 설치 (`/status`, `/trace`, `/arch`, `/onboard`, `/report`, `/search`)
 
-<details>
-<summary><strong>수동 설치 (고급)</strong></summary>
+### Step 3: Claude Code 재시작
 
-직접 설정하고 싶을 때:
+Claude Code를 **완전히 종료했다가 다시 실행**하세요. 그리고:
+
+```
+/status
+```
+
+결과가 나오면 설치 완료!
+
+### 설치 잘 됐는지 확인
 
 ```bash
-# 1. 설치
+archflow doctor
+```
+
+어디가 연결되고 어디가 안 되는지 알려줍니다.
+
+### 설치 방식이 여러 개인데?
+
+| 방식 | 설명 | 언제 쓰나 |
+|------|------|----------|
+| `pip install archflow-hub` | 컴퓨터에 설치 | `archflow init`, `archflow doctor` 실행할 때 |
+| `uvx archflow-hub` | 설치 없이 임시 실행 (npx와 비슷) | Claude Code가 MCP 서버를 자동으로 실행할 때 (직접 쓸 일 없음) |
+
+> `pip install`로 한번 설치하고 `archflow init`만 실행하면 됩니다. 이후 Claude Code가 알아서 서버를 실행합니다.
+
+---
+
+### 🔑 API 토큰 발급 방법
+
+<details>
+<summary><strong>Jira API 토큰 발급</strong> (2분, 필수)</summary>
+
+1. https://id.atlassian.com/manage-profile/security/api-tokens 접속
+2. **"Create API token"** 클릭
+3. 라벨 입력 (예: `archflow`) → **Create**
+4. 생성된 토큰 복사 → `archflow init`에서 붙여넣기
+
+</details>
+
+<details>
+<summary><strong>GitHub Personal Access Token 발급</strong> (2분, 선택)</summary>
+
+1. https://github.com/settings/tokens?type=beta 접속
+2. **"Generate new token"** 클릭
+3. 이름: `archflow`
+4. **Repository permissions** → 아래 3개를 **Read-only**로 설정:
+   - Contents
+   - Pull requests
+   - Metadata
+5. 생성된 토큰 복사 → `archflow init`에서 붙여넣기
+
+</details>
+
+<details>
+<summary><strong>Google Drive OAuth 설정</strong> (10분, Draw.io 사용할 때만)</summary>
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → 프로젝트 생성 또는 선택
+2. **APIs & Services > Library** → **Google Drive API** 활성화
+3. **Credentials** → **Create Credentials** → **OAuth client ID** (Desktop app)
+4. **Client ID**와 **Client Secret** 복사
+5. [OAuth Playground](https://developers.google.com/oauthplayground/)에서 Refresh Token 발급:
+   - 오른쪽 상단 설정(톱니바퀴) → "Use your own OAuth credentials" 체크 → Client ID/Secret 입력
+   - Step 1: `drive.readonly` 선택 → Authorize
+   - Step 2: Exchange → **Refresh token** 복사
+6. `archflow init`에서 3개 모두 입력
+
+</details>
+
+<details>
+<summary><strong>Jira board_id 찾는 법</strong></summary>
+
+Jira 보드를 브라우저에서 열고 URL을 보세요:
+```
+https://your-team.atlassian.net/jira/software/projects/KAN/boards/1
+                                                                  ^
+                                                            이 숫자가 board_id
+```
+
+</details>
+
+<details>
+<summary><strong>Google Drive folder_id 찾는 법</strong></summary>
+
+`.drawio` 파일이 있는 Google Drive 폴더를 열고 URL을 보세요:
+```
+https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                       이 부분이 folder_id
+```
+
+</details>
+
+---
+
+## 💡 이런 걸 할 수 있어요
+
+### 누구나
+
+| 이렇게 물어보세요 | ArchFlow가 하는 일 |
+|-------------------|-------------------|
+| "스프린트 현황 어때?" | Jira에서 현재 스프린트 이슈를 상태별로 정리, 진행률 표시 |
+| "Redis 관련된 거 전부 찾아줘" | Jira 이슈 + GitHub 코드 + 다이어그램 노드 통합 검색 |
+| "Auth Service랑 연결된 게 뭐야?" | Draw.io 다이어그램에서 연결 관계 파싱 |
+
+### 개발자
+
+| 이렇게 물어보세요 | ArchFlow가 하는 일 |
+|-------------------|-------------------|
+| "KAN-42 코드 어디야?" | Jira 이슈 → GitHub PR → 코드 파일 → 아키텍처 노드 추적 |
+| "auth 관련 PR 보여줘" | GitHub PR을 키워드, 브랜치, Jira 키로 검색 |
+| "이번 주 팀이 뭐 했어?" | 커밋 + PR + Jira 상태 변경을 하나로 종합 |
+
+### PM / 신규 팀원
+
+| 이렇게 물어보세요 | ArchFlow가 하는 일 |
+|-------------------|-------------------|
+| "주간 보고서 만들어줘" | 누가 뭘 했는지, 뭐가 진행 중인지, 뭐가 막혀있는지 정리 |
+| "프로젝트 처음인데 설명해줘" | 스프린트 + 아키텍처 + 레포 구조 + 주요 이슈 종합 |
+| "인증 에픽 얼마나 됐어?" | 에픽 하위 이슈 진행률, 상태별 분류 |
+
+---
+
+## ⚡ 슬래시 커맨드
+
+Claude Code에서 `/`를 입력하면 바로 쓸 수 있습니다:
+
+| 커맨드 | 설명 | 예시 |
+|--------|------|------|
+| `/status` | 진행 상황 확인 | "인증 기능 어디까지 됐어?" |
+| `/trace` | 이슈 → 코드 추적 | "KAN-123 관련 PR 찾아줘" |
+| `/arch` | 아키텍처 조회 | "Auth Service 연결 관계 보여줘" |
+| `/onboard` | 프로젝트 개요 | "이 프로젝트 전체 맥락 알려줘" |
+| `/report` | 팀 활동 보고서 | "이번 주 팀 리포트" |
+| `/search` | 통합 검색 | "Redis 관련된 거 전부" |
+
+> 슬래시 커맨드 없이 자연어로 물어봐도 됩니다. Claude가 알아서 ArchFlow 도구를 사용합니다.
+
+---
+
+## MCP 도구 (23개)
+
+ArchFlow는 내부적으로 23개의 MCP 도구를 제공합니다. 슬래시 커맨드가 이 도구들을 조합해서 동작합니다:
+
+| 그룹 | 개수 | 도구 |
+|------|:----:|------|
+| **Jira** | 7 | `get_issue`, `sprint_status`, `search`, `user_workload`, `component_status`, `recent_activity`, `epic_progress` |
+| **GitHub** | 6 | `get_pr`, `list_prs`, `pr_for_issue`, `recent_commits`, `search_code`, `repo_overview` |
+| **Draw.io** | 4 | `list_diagrams`, `get_diagram`, `search_nodes`, `node_connections` |
+| **크로스소스** | 5 | `trace_issue`, `trace_component`, `project_overview`, `team_activity`, `onboarding_context` |
+| **통합 검색** | 1 | `search` (모든 소스 동시 검색) |
+
+모든 도구는 `archflow_` 접두사가 붙습니다 (예: `archflow_jira_get_issue`).
+
+### 소스별 필요 조건
+
+| 도구 그룹 | Jira | GitHub | Draw.io |
+|----------|:----:|:------:|:-------:|
+| Jira 도구 | **필수** | — | — |
+| GitHub 도구 | — | **필수** | — |
+| Draw.io 도구 | — | — | **필수** |
+| 크로스소스 | **필수** | 선택 | 선택 |
+| 통합 검색 | 선택 | 선택 | 선택 |
+
+설정 안 된 소스의 도구는 에러 대신 "not configured" 메시지를 반환합니다.
+
+---
+
+## 🔧 설정 가이드
+
+### 설정 파일
+
+`archflow init`이 자동 생성합니다. 나중에 수정하려면 직접 편집:
+
+```yaml
+# ~/.archflow/config.yml
+
+jira:
+  url: "https://your-team.atlassian.net"
+  projects: ["KAN"]          # 프로젝트 키 (여러 개 가능)
+  board_id: "1"              # 스프린트 보드 ID
+
+github:
+  repos: ["your-org/repo"]   # owner/repo 형식
+  default_branch: "main"
+
+gdrive:
+  folder_id: "1AbCdEfG..."   # .drawio 파일이 있는 폴더
+  cache_ttl_minutes: 30       # API 캐시 시간 (분)
+```
+
+<details>
+<summary><strong>수동 설치 (archflow init 없이)</strong></summary>
+
+```bash
 pip install archflow-hub
 
-# 2. 설정 파일 직접 생성: ~/.archflow/config.yml
-# archflow.config.example.yml 템플릿 참고
-
-# 3. MCP 서버 등록 (claude mcp add-json으로 환경변수 포함)
 claude mcp add-json archflow '{
   "command": "uvx",
   "args": ["archflow-hub"],
@@ -101,217 +301,21 @@ claude mcp add-json archflow '{
 }'
 ```
 
-> **참고**: `claude mcp add` (add-json 없이)는 환경변수를 전달하지 **않습니다**. 수동 등록 시 `add-json`을 사용하거나, `archflow init`을 실행하면 모든 것을 자동 처리합니다.
-
-**슬래시 명령어 설치** (선택):
-
-```bash
-# macOS / Linux
-cp -r skills/archflow-* ~/.claude/skills/
-
-# Windows (PowerShell)
-Copy-Item -Recurse skills\archflow-* $env:USERPROFILE\.claude\skills\
-```
-
-Claude Code 재시작.
+> `claude mcp add` (add-json 없이)는 환경변수를 전달하지 **않습니다**.
 
 </details>
 
 ---
 
-## 도구
-
-### Jira (7개)
-
-| 도구 | 하는 일 |
-|------|--------|
-| `archflow_jira_get_issue` | 이슈 상세 조회 (댓글, 링크, 서브태스크) |
-| `archflow_jira_sprint_status` | 현재 스프린트 상태별 이슈 |
-| `archflow_jira_search` | JQL 검색 |
-| `archflow_jira_user_workload` | 특정 사용자에게 할당된 이슈 |
-| `archflow_jira_component_status` | 컴포넌트별 진행률 (%) |
-| `archflow_jira_recent_activity` | 최근 N일 업데이트된 이슈 |
-| `archflow_jira_epic_progress` | 에픽 하위 이슈 + 완료율 |
-
-### GitHub (6개)
-
-| 도구 | 하는 일 |
-|------|--------|
-| `archflow_github_get_pr` | PR 상세 (diff 통계) |
-| `archflow_github_list_prs` | PR 목록 (상태/작성자/브랜치 필터) |
-| `archflow_github_pr_for_issue` | Jira 이슈 키로 관련 PR 찾기 |
-| `archflow_github_recent_commits` | 최근 커밋 목록 |
-| `archflow_github_search_code` | 레포에서 코드 검색 |
-| `archflow_github_repo_overview` | 레포 요약 (언어, 활동) |
-
-### Draw.io / 아키텍처 (4개)
-
-| 도구 | 하는 일 |
-|------|--------|
-| `archflow_drawio_list_diagrams` | Google Drive의 .drawio 파일 목록 |
-| `archflow_drawio_get_diagram` | 다이어그램 → 노드 + 연결 파싱 |
-| `archflow_drawio_search_nodes` | 노드 라벨로 검색 |
-| `archflow_drawio_node_connections` | 특정 노드의 인바운드/아웃바운드 연결 |
-
-### 크로스소스 인텔리전스 (5개)
-
-| 도구 | 하는 일 |
-|------|--------|
-| `archflow_trace_issue` | 이슈 → PR + 코드 + 다이어그램 노드 추적 |
-| `archflow_trace_component` | 아키텍처 컴포넌트 → 이슈 + PR + 연결 관계 |
-| `archflow_project_overview` | 스프린트 + 아키텍처 + GitHub 활동 종합 |
-| `archflow_team_activity` | 주간 팀 보고서 (모든 소스 종합) |
-| `archflow_onboarding_context` | 신규 팀원용 프로젝트 전체 맥락 |
-
-### 통합 검색 (1개)
-
-| 도구 | 하는 일 |
-|------|--------|
-| `archflow_search` | Jira + GitHub + 다이어그램 통합 검색 |
-
-### 각 도구에 필요한 소스
-
-| 도구 그룹 | Jira | GitHub | Draw.io |
-|----------|:----:|:------:|:-------:|
-| Jira 도구 | **필수** | — | — |
-| GitHub 도구 | — | **필수** | — |
-| Draw.io 도구 | — | — | **필수** |
-| 크로스소스 (추적, 오버뷰) | **필수** | 선택 | 선택 |
-| 통합 검색 | 선택 | 선택 | 선택 |
-
-설정 안 된 소스의 도구는 크래시 대신 "not configured" 메시지를 반환합니다.
-
----
-
-## 슬래시 명령어
-
-설치 후 Claude Code에서 바로 사용:
-
-| 명령어 | 대상 | 사용 예시 |
-|--------|------|----------|
-| `/status` | 모두 | "인증 기능 어디까지 됐어?" |
-| `/trace` | 개발자 | "KAN-123 관련 코드 어디야?" |
-| `/arch` | 모두 | "Auth Service가 뭐랑 연결돼있어?" |
-| `/onboard` | 신규 팀원 | "이 프로젝트 전체 요약해줘" |
-| `/report` | 대표/PM | "이번주 팀 활동 정리해줘" |
-| `/search` | 모두 | "인증 관련 전부 찾아줘" |
-
----
-
-## 설정 가이드
-
-### Step 1: `archflow.config.yml`
-
-`archflow init` 실행 후 `~/.archflow/config.yml`에 설정이 저장됩니다. 언제든 편집 가능:
-
-```yaml
-jira:
-  url: "https://your-domain.atlassian.net"
-  projects:
-    - "KAN"              # Jira 프로젝트 키
-  board_id: "1"          # 아래 "board_id 찾는 법" 참고
-
-github:
-  repos:
-    - "your-org/backend-api"     # owner/repo 형식
-  default_branch: "main"
-
-gdrive:
-  folder_id: "1AbCdEfG..."      # 아래 "folder_id 찾는 법" 참고
-  cache_ttl_minutes: 30
-```
-
-#### board_id 찾는 법
-
-1. 브라우저에서 Jira 보드 열기
-2. URL 확인:
-   ```
-   https://your-domain.atlassian.net/jira/software/projects/KAN/boards/1
-                                                                       ^
-                                                              이 숫자가 board_id
-   ```
-3. `/boards/` 뒤의 숫자를 복사
-
-#### folder_id 찾는 법 (Google Drive)
-
-1. `.drawio` 파일이 있는 Google Drive 폴더 열기
-2. URL 확인:
-   ```
-   https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz
-                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                                          이 문자열이 folder_id
-   ```
-3. `/folders/` 뒤의 문자열을 복사
-
-### Step 2: 환경 변수 (API 토큰)
-
-`archflow init`이 자동으로 설정합니다. 수동으로 설정해야 할 경우:
-
-| 변수 | 용도 | 발급 방법 |
-|------|------|----------|
-| `JIRA_INSTANCE_URL` | Jira | Atlassian URL (예: `https://team.atlassian.net`) |
-| `JIRA_USER_EMAIL` | Jira | Atlassian 이메일 |
-| `JIRA_API_KEY` | Jira | [Jira 토큰 발급 →](#jira-api-토큰) |
-| `GITHUB_PERSONAL_ACCESS_TOKEN` | GitHub | [GitHub 토큰 발급 →](#github-personal-access-token) |
-| `GOOGLE_CLIENT_ID` | Draw.io | [Google OAuth 설정 →](#google-drive-oauth) |
-| `GOOGLE_CLIENT_SECRET` | Draw.io | Google Cloud Console |
-| `GOOGLE_REFRESH_TOKEN` | Draw.io | OAuth 인증 흐름 |
-
-> **별칭**: `JIRA_URL`, `JIRA_EMAIL`, `JIRA_API_TOKEN`도 사용 가능합니다 (설치 스크립트는 `JIRA_INSTANCE_URL` / `JIRA_USER_EMAIL` / `JIRA_API_KEY` 사용).
->
-> **Google Drive**: 3개 변수 (`CLIENT_ID`, `CLIENT_SECRET`, `REFRESH_TOKEN`)가 **모두** 설정되어야 합니다. 하나라도 빠지면 Draw.io 기능이 비활성화됩니다.
-
-### 토큰 발급 가이드
-
-<details>
-<summary><strong>Jira API 토큰</strong> (2분)</summary>
-
-1. https://id.atlassian.com/manage-profile/security/api-tokens 접속
-2. **"API 토큰 만들기"** → 라벨 입력 (예: `archflow`)
-3. 토큰 복사 → `archflow init` 또는 `.mcp.json`에 붙여넣기
-
-</details>
-
-<details>
-<summary><strong>GitHub Personal Access Token</strong> (2분)</summary>
-
-1. https://github.com/settings/tokens?type=beta 접속
-2. **"Generate new token"** → 이름: `archflow`
-3. 권한 → Repository: **Contents**, **Pull requests**, **Metadata** (모두 Read-only)
-4. 토큰 복사 → `archflow init` 또는 `.mcp.json`에 붙여넣기
-
-</details>
-
-<details>
-<summary><strong>Google Drive OAuth</strong> (10분 — Draw.io 사용 시만)</summary>
-
-1. [Google Cloud Console](https://console.cloud.google.com/) → 프로젝트 생성/선택
-2. **API 및 서비스 > 라이브러리** → **Google Drive API** 사용 설정
-3. **사용자 인증 정보** → **OAuth 클라이언트 ID** 만들기 (데스크톱 앱)
-4. **클라이언트 ID**와 **클라이언트 보안 비밀번호** 복사
-5. [OAuth Playground](https://developers.google.com/oauthplayground/)에서 Refresh Token 받기:
-   - 설정 → "Use your own OAuth credentials" → Client ID/Secret 입력
-   - Step 1: `drive.readonly` 스코프 선택 → Authorize
-   - Step 2: Exchange → **Refresh token** 복사
-
-</details>
-
----
-
-## 아키텍처
+## Architecture
 
 <p align="center">
-  <img src="docs/archflow_architecture.png" alt="ArchFlow 아키텍처" width="600" />
+  <img src="docs/archflow_architecture.png" alt="ArchFlow Architecture" width="600" />
 </p>
-
-**토큰 절감**: 모든 API 응답은 TTL 캐시. 같은 질문 반복 시 API 호출 0.
-
-<details>
-<summary>Mermaid (텍스트 버전)</summary>
 
 ```mermaid
 graph TB
-    User["사용자 질문"] --> Server
+    User["질문"] --> Server
 
     subgraph Server["ArchFlow MCP Server"]
         Cache["캐시 (TTL)"]
@@ -321,101 +325,68 @@ graph TB
         DP["Draw.io Provider"]
     end
 
-    JP --> Jira["Jira Cloud REST API"]
-    GP --> GitHub["GitHub REST API"]
-    DP --> GDrive["Google Drive (.drawio)"]
+    JP --> Jira["Jira Cloud API"]
+    GP --> GitHub["GitHub API"]
+    DP --> GDrive["Google Drive"]
 ```
 
-</details>
+모든 API 응답은 캐시됩니다 (기본 30분). 같은 질문을 반복하면 API 호출 0.
 
 ---
 
-## 문제 해결
-
-### 설정 체크리스트
+## 🔥 문제 해결
 
 ```bash
-# 내장 진단 도구 실행
-archflow doctor
+archflow doctor    # 모든 연결 상태를 한번에 점검
 ```
 
-Python 버전, config 파일, API 연결, MCP 등록 상태를 한 번에 확인합니다.
-
-### 자주 묻는 문제
-
-| 증상 | 원인 | 해결 |
-|------|------|------|
-| Claude Code에서 서버 안 보임 | MCP 설정 미등록 | `archflow init` 재실행, 또는 `claude mcp add-json`으로 수동 추가 ([수동 설치 참고](#수동-설치-고급)) |
-| `"Jira not configured"` | `JIRA_INSTANCE_URL` 환경변수 누락 | `.mcp.json` → `archflow.env`에 Jira 변수 3개 모두 있는지 확인 |
-| `"GitHub not configured"` | `GITHUB_PERSONAL_ACCESS_TOKEN` 누락 | `.mcp.json` → `archflow.env`에 추가 |
-| Draw.io 파일 안 보임 | `folder_id` 오류 또는 OAuth 토큰 누락 | config의 `folder_id` 확인 ([찾는 법 →](#folder_id-찾는-법-google-drive)) + Google 환경변수 3개 확인 |
-| 데이터가 오래됨 | API 응답 캐시됨 | 기본 TTL 30분. Claude Code 재시작으로 캐시 초기화 |
-| GitHub rate limit | Search API 30회/분 제한 | 잠시 후 재시도 — 결과는 자동 캐시됨 |
-| `bash: command not found` (Windows) | PowerShell에서 bash 스크립트 실행 시도 | `powershell -ExecutionPolicy Bypass -File scripts\install.ps1` 사용 |
-| 서버 시작 시 `SyntaxError` | Python 버전 부족 | `python --version` 확인 — 3.11+ 필요 |
-| MCP 설정 파싱 에러 | `.mcp.json` JSON 문법 오류 | `python -m json.tool ~/.claude/.mcp.json` 으로 에러 위치 확인 |
+| 문제 | 해결 |
+|------|------|
+| Claude Code에서 ArchFlow가 안 보임 | `archflow init` 다시 실행 → Claude Code 재시작 |
+| "Jira not configured" | `.mcp.json`에 Jira 토큰이 없음 → `archflow init` 재실행 |
+| "GitHub not configured" | GitHub 토큰을 스킵했거나 만료됨 → 토큰 재발급 후 init |
+| Draw.io 파일이 안 나옴 | `folder_id` 확인 + Google OAuth 3개 값 모두 입력했는지 확인 |
+| 데이터가 옛날 것 | 캐시 때문 (기본 30분) → Claude Code 재시작하면 초기화 |
+| GitHub 요청 제한 | 검색 API는 분당 30회 제한 → 잠시 기다리면 캐시가 해결 |
 
 ---
 
-## 기여 가이드
+## Contributing
 
-### 프로젝트 구조
+### Project Structure
 
 ```
 src/archflow/
-├── cli.py             # CLI 디스패처 (init, doctor, serve)
-├── cli_init.py        # 대화형 설정 마법사
-├── cli_doctor.py      # 연결 상태 진단
-├── server.py          # MCP 서버 엔트리포인트 + lifespan
-├── clients/           # HTTP 클라이언트
-│   ├── jira_client.py       # Jira REST API 호출
-│   ├── github_client.py     # GitHub REST API 호출
-│   └── gdrive_client.py     # Google Drive API 호출
-├── providers/         # 소스별 비즈니스 로직
-│   ├── jira_provider.py     # Jira 데이터 가공
-│   ├── github_provider.py   # GitHub 데이터 가공
-│   └── drawio_provider.py   # Draw.io XML 파싱 + 데이터 가공
-├── core/              # 공통 인프라
-│   ├── config.py            # YAML 설정 로더
-│   ├── cache.py             # TTL 캐시
-│   ├── matcher.py           # 크로스소스 매칭 엔진
-│   └── models.py            # Pydantic 모델
-└── tools/             # MCP 도구 등록 (23개)
-    ├── jira_tools.py        # Jira 도구 7개
-    ├── github_tools.py      # GitHub 도구 6개
-    ├── drawio_tools.py      # Draw.io 도구 4개
-    ├── cross_tools.py       # 크로스소스 도구 5개
-    └── search_tools.py      # 통합 검색 도구 1개
+├── server.py              # MCP 서버 + 도구 등록
+├── cli.py                 # CLI: init, doctor, serve
+├── cli_init.py            # 설치 마법사 (토큰 + MCP + 슬래시 커맨드)
+├── cli_doctor.py          # 연결 진단
+├── clients/               # API 클라이언트 (Jira, GitHub, Google Drive)
+├── providers/             # 소스별 비즈니스 로직
+├── core/                  # 설정, 캐시, 매칭, 모델
+├── tools/                 # MCP 도구 23개
+└── skills/                # 슬래시 커맨드 6개
 ```
 
-### 개발 환경 설정
+### Dev Setup
 
 ```bash
-uv sync --dev                          # 개발 의존성 설치
-uv run python -m pytest tests/ -v      # 테스트 실행
-uv run ruff check src/                 # 린트
+git clone https://github.com/Juhwan01/ArchFlow.git
+cd ArchFlow
+uv sync --dev
+uv run python -m pytest tests/ -v
+uv run ruff check src/
 ```
 
-### 어디서부터 봐야 하나?
-
-| 하고 싶은 것 | 볼 파일 |
-|-------------|---------|
-| 새 Jira 도구 추가 | `src/archflow/tools/jira_tools.py` |
-| 새 GitHub 도구 추가 | `src/archflow/tools/github_tools.py` |
-| 소스 간 매칭 로직 수정 | `src/archflow/core/matcher.py` |
-| 새 데이터 소스 추가 | `clients/X_client.py` + `providers/X_provider.py` + `tools/X_tools.py` 생성 |
-| 캐시 동작 변경 | `src/archflow/core/cache.py` |
-
-### 커밋 컨벤션
+### Commit Convention
 
 ```
 <type>: <description>
-
-타입: feat | fix | refactor | docs | test | chore | perf | ci
+Types: feat | fix | refactor | docs | test | chore | perf | ci
 ```
 
 ---
 
-## 라이선스
+## License
 
 MIT — [LICENSE](LICENSE) 참고
