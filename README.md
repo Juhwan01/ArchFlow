@@ -259,9 +259,10 @@ https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz
 ```bash
 pip install archflow-hub   # or: uv pip install archflow-hub
 
-claude mcp add-json archflow '{
+claude mcp add-json --scope user archflow '{
+  "type": "stdio",
   "command": "uvx",
-  "args": ["archflow-hub"],
+  "args": ["--from", "archflow-hub", "archflow"],
   "env": {
     "PYTHONUNBUFFERED": "1",
     "ARCHFLOW_CONFIG_PATH": "~/.archflow/config.yml",
@@ -315,8 +316,8 @@ archflow doctor    # checks Python, config, APIs, MCP registration
 | Problem | Solution |
 |---------|----------|
 | Server not showing in Claude Code | Run `archflow init` again, then restart Claude Code |
-| "Jira not configured" | Check Jira env vars in `~/.claude/.mcp.json` |
-| "GitHub not configured" | Add `GITHUB_PERSONAL_ACCESS_TOKEN` to `.mcp.json` |
+| "Jira not configured" | Check Jira env vars — run `archflow init` again |
+| "GitHub not configured" | Add `GITHUB_PERSONAL_ACCESS_TOKEN` — run `archflow init` again |
 | Draw.io files not found | Check `folder_id` in config + all 3 Google env vars |
 | Stale data | Restart Claude Code (clears 30 min cache) |
 | GitHub rate limit | Wait a minute — results are cached automatically |

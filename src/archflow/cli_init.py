@@ -19,7 +19,7 @@ import yaml
 
 HOME_CONFIG_DIR = Path.home() / ".archflow"
 HOME_CONFIG_FILE = HOME_CONFIG_DIR / "config.yml"
-MCP_CONFIG_FILE = Path.home() / ".claude" / ".mcp.json"
+MCP_CONFIG_FILE = Path.home() / ".claude.json"
 
 
 # ---------------------------------------------------------------------------
@@ -139,9 +139,40 @@ def _install_skills() -> list[str]:
 
 
 def _register_mcp(env_vars: dict) -> None:
-    """Add/update archflow entry in ~/.claude/.mcp.json."""
-    MCP_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    """Register archflow MCP server via `claude mcp add-json` (preferred) or direct file edit (fallback)."""
+    import subprocess
 
+    server_config = {
+        "type": "stdio",
+        "command": "uvx",
+        "args": ["--from", "archflow-hub", "archflow"],
+        "env": {
+            "PYTHONUNBUFFERED": "1",
+            "ARCHFLOW_CONFIG_PATH": str(HOME_CONFIG_FILE),
+            **env_vars,
+        },
+    }
+
+    # Try the official `claude mcp add-json` CLI first
+    try:
+        result = subprocess.run(
+            [
+                "claude", "mcp", "add-json",
+                "--scope", "user",
+                "archflow",
+                json.dumps(server_config),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        if result.returncode == 0:
+            return
+        # CLI failed — fall through to direct file edit
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # Fallback: write directly to ~/.claude.json
     config: dict = {}
     if MCP_CONFIG_FILE.exists():
         try:
@@ -152,15 +183,7 @@ def _register_mcp(env_vars: dict) -> None:
     if "mcpServers" not in config:
         config["mcpServers"] = {}
 
-    config["mcpServers"]["archflow"] = {
-        "command": "uvx",
-        "args": ["archflow-hub"],
-        "env": {
-            "PYTHONUNBUFFERED": "1",
-            "ARCHFLOW_CONFIG_PATH": str(HOME_CONFIG_FILE),
-            **env_vars,
-        },
-    }
+    config["mcpServers"]["archflow"] = server_config
 
     MCP_CONFIG_FILE.write_text(
         json.dumps(config, indent=2, ensure_ascii=False) + "\n",
@@ -318,13 +341,13 @@ def run_init() -> None:
     # Register MCP server
     # ------------------------------------------------------------------
     print()
-    if _confirm("Register ArchFlow in Claude Code (~/.claude/.mcp.json)?"):
+    if _confirm("Register ArchFlow in Claude Code (~/.claude.json)?"):
         _register_mcp(env_vars)
-        _ok(f"MCP server registered: {MCP_CONFIG_FILE}")
+        _ok("MCP server registered (scope: user)")
     else:
         print()
         print("  Manual registration:")
-        print("    claude mcp add archflow --scope user -- uvx archflow")
+        print("    claude mcp add archflow --scope user -- uvx --from archflow-hub archflow")
 
     # ------------------------------------------------------------------
     # Install slash commands

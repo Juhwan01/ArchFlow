@@ -293,9 +293,10 @@ gdrive:
 ```bash
 pip install archflow-hub   # 또는: uv pip install archflow-hub
 
-claude mcp add-json archflow '{
+claude mcp add-json --scope user archflow '{
+  "type": "stdio",
   "command": "uvx",
-  "args": ["archflow-hub"],
+  "args": ["--from", "archflow-hub", "archflow"],
   "env": {
     "PYTHONUNBUFFERED": "1",
     "ARCHFLOW_CONFIG_PATH": "~/.archflow/config.yml",
@@ -349,7 +350,7 @@ archflow doctor    # 모든 연결 상태를 한번에 점검
 | 문제 | 해결 |
 |------|------|
 | Claude Code에서 ArchFlow가 안 보임 | `archflow init` 다시 실행 → Claude Code 재시작 |
-| "Jira not configured" | `.mcp.json`에 Jira 토큰이 없음 → `archflow init` 재실행 |
+| "Jira not configured" | Jira 토큰 누락 → `archflow init` 재실행 |
 | "GitHub not configured" | GitHub 토큰을 스킵했거나 만료됨 → 토큰 재발급 후 init |
 | Draw.io 파일이 안 나옴 | `folder_id` 확인 + Google OAuth 3개 값 모두 입력했는지 확인 |
 | 데이터가 옛날 것 | 캐시 때문 (기본 30분) → Claude Code 재시작하면 초기화 |
