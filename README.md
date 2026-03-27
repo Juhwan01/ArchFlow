@@ -61,8 +61,12 @@ ArchFlow:
 ### Quick Start (2 commands)
 
 ```bash
-# 1. Install the package
-pip install archflow-hub
+# 1. Install the package (pick one)
+pip install archflow-hub        # classic
+# or
+uv pip install archflow-hub    # faster alternative
+# or
+pipx install archflow-hub      # isolated global install
 
 # 2. Interactive setup — validates tokens, generates config, registers MCP, installs slash commands
 archflow init
@@ -92,9 +96,10 @@ archflow doctor    # verify all connections
 
 | Method | Description | When to use |
 |--------|-------------|-------------|
-| `pip install archflow-hub` | Installs globally | To run `archflow init` and `archflow doctor` from terminal |
-| `uvx archflow-hub` | Runs without installing (like npx) | Used internally by Claude Code to start the MCP server |
-| `uv tool install archflow-hub` | Installs globally via uv | Alternative to pip if you use uv |
+| `pip install archflow-hub` | Classic pip install | Default option if you don't use uv |
+| `uv pip install archflow-hub` | Install via uv (10-100x faster) | If you have [uv](https://docs.astral.sh/uv/) installed |
+| `pipx install archflow-hub` | Isolated global install | CLI tools without polluting global env |
+| `uvx archflow-hub` | Run without installing (like npx) | Used internally by Claude Code to start the MCP server |
 
 > After `archflow init`, Claude Code automatically runs the MCP server via `uvx` — no additional setup needed.
 
@@ -252,7 +257,7 @@ https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz
 <summary><strong>Manual install (without archflow init)</strong></summary>
 
 ```bash
-pip install archflow-hub
+pip install archflow-hub   # or: uv pip install archflow-hub
 
 claude mcp add-json archflow '{
   "command": "uvx",
