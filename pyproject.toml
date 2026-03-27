@@ -1,6 +1,6 @@
 [project]
 name = "archflow-hub"
-version = "0.2.0"
+version = "0.2.1"
 description = "Context Hub MCP Server - Jira + GitHub + Draw.io unified intelligence"
 readme = "README.md"
 license = { text = "MIT" }
