@@ -5,6 +5,7 @@ from __future__ import annotations
 import getpass
 import json
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -119,6 +120,22 @@ def _write_config(config_data: dict, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         yaml.dump(config_data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+
+
+def _install_skills() -> list[str]:
+    """Copy bundled slash-command skills to ~/.claude/skills/."""
+    skills_src = Path(__file__).parent / "skills"
+    skills_dst = Path.home() / ".claude" / "skills"
+    skills_dst.mkdir(parents=True, exist_ok=True)
+
+    installed: list[str] = []
+    for skill_dir in sorted(skills_src.glob("archflow-*")):
+        if skill_dir.is_dir():
+            target = skills_dst / skill_dir.name
+            shutil.copytree(skill_dir, target, dirs_exist_ok=True)
+            installed.append(skill_dir.name)
+
+    return installed
 
 
 def _register_mcp(env_vars: dict) -> None:
@@ -308,6 +325,25 @@ def run_init() -> None:
         print()
         print("  Manual registration:")
         print("    claude mcp add archflow --scope user -- uvx archflow")
+
+    # ------------------------------------------------------------------
+    # Install slash commands
+    # ------------------------------------------------------------------
+    print()
+    if _confirm("Install slash commands (/status, /arch, /trace, etc)?"):
+        try:
+            installed = _install_skills()
+            for name in installed:
+                _ok(f"Installed: /{name.replace('archflow-', '')}")
+        except Exception as e:
+            _fail(f"Slash command install failed: {e}")
+            print("  Install manually later:")
+            if sys.platform == "win32":
+                print("    Copy-Item -Recurse skills\\archflow-* $env:USERPROFILE\\.claude\\skills\\")
+            else:
+                print("    cp -r skills/archflow-* ~/.claude/skills/")
+    else:
+        _skip("Slash command installation skipped.")
 
     # ------------------------------------------------------------------
     # Done

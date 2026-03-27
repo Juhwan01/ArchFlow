@@ -36,6 +36,7 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/archflow"]
+artifacts = ["src/archflow/skills/**/*.md"]
 
 [project.optional-dependencies]
 dev = [
